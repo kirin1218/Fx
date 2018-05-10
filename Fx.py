@@ -6,9 +6,10 @@ import Adf2Data as a2d
 import MakeLearningData as mld
 
 # Const
-TRAIN_SIZE = 10000
-TEST_SIZE = 300
-
+TRAIN_SIZE = 100
+TEST_SIZE = 30
+CNT_PER_ONEDATA = 100
+NEED_FUTURE_POS = 100
 train_current = 0
 train_idx_list = []
 test_idx_list = []
@@ -56,29 +57,37 @@ def ParseDatLineData( line ):
     return d,p
 
 def LoadDataFile( pairName ):
+    global data_list
     print("load dat file")
     counter = 0
     aryIdx = 0
     needList = train_idx_list
     needList.extend(test_idx_list)
     needList.sort()
-
+    print( "needlistsize:"+str(len(needList)))
     path = ".\\Data\\" + pairName + ".dat"
+    print(data_list)
     if os.path.exists(path) != False:
+        prev_counter = 0
         for i in needList:
+            print( "needidx:"+str(i))
+            counter = 0
             start = i
-            end = start + 1000 - 1
-            label = end + 100 
+            end = start + CNT_PER_ONEDATA - 1
+            label = end + NEED_FUTURE_POS 
             with open(path) as f:
                 for line in f:
-                    if start <= counter and counter <= end:
-                        d,p = ParseDatLineData(line)
-                        data_list[counter] = [d,p]
-                    if counter == label:
-                        d,p = ParseDatLineData(line)
-                        data_list[counter] = [d,p]
-                        break
-                    counter == counter+1
+                    if prev_counter < counter:
+                        if start <= counter and counter <= end:
+                            d,p = ParseDatLineData(line)
+                            data_list[counter] = [d,p]
+                            #print(data_list[counter])
+                        if counter == label:
+                            d,p = ParseDatLineData(line)
+                            data_list[counter] = [d,p]
+                            break
+                    counter = counter+1
+                prev_counter = counter
         if len(data_list) > 0:
             print("load dat file success")
         return len(data_list)
@@ -98,15 +107,26 @@ def SetIdxCountSize( trainsize, testsize ):
     return False
 
 def GetData( idx ):
+    global train_idx_list
+    global data_list
     prices = []
-    for i in range(idx,idx+1000-1):
-        prices.append(data_list[i][1])
+    print(data_list)
+    need_idx = train_idx_list[idx]
+    for i in range(need_idx,idx+CNT_PER_ONEDATA-1):
+        print(need_idx)
+        prices.append(data_list[need_idx][1])
     return prices
 
 def GetLabel( idx ):
-    return data_list[idx][1]   
+    global train_idx_list
+    global data_list
+    prices = []
+    print(data_list)
+    need_idx = train_idx_list[idx]
+    return data_list[need_idx+CNT_PER_ONEDATA+NEED_FUTURE_POS-1][1]   
     
 def GetNextTrainData( size ):
+    global train_current
     print( "GetNextTrainData:" + str(size) )
     retDataList = []
     retLabelList = []
@@ -131,7 +151,7 @@ def GetTestData():
 
 #訓練用とテスト用のデータidxファイルを読み込む
 if LoadIdxFile("USDJPY") != False:
-    SetIdxCountSize( 10000, 300 )
+    SetIdxCountSize( TRAIN_SIZE, TEST_SIZE )
     LoadDataFile("USDJPY")
     train_data,train_label = GetNextTrainData( 100 )
     test_data,test_label = GetTestData()
