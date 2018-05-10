@@ -23,9 +23,9 @@ def LoadIdxFile( pairName ):
     global test_idx_list
 
     train_current = 0
-    path = ".\\Data\\" + pairName + ".idx"
+    path = r'./Data/' + pairName + ".idx"
     if os.path.exists( path ) == False:
-        mld.MakeData( pairName )
+        mld.MakeData( pairName, CNT_PER_ONEDATA, NEED_FUTURE_POS )
 
     idxList = []
     if os.path.exists( path ) != False:
@@ -65,7 +65,7 @@ def LoadDataFile( pairName ):
     needList.extend(test_idx_list)
     needList.sort()
     print( "needlistsize:"+str(len(needList)))
-    path = ".\\Data\\" + pairName + ".dat"
+    path = r'./Data/' + pairName + ".dat"
     print(data_list)
     if os.path.exists(path) != False:
         prev_counter = 0
@@ -107,32 +107,28 @@ def SetIdxCountSize( trainsize, testsize ):
     return False
 
 def GetData( idx ):
-    global train_idx_list
     global data_list
     prices = []
-    print(data_list)
-    need_idx = train_idx_list[idx]
-    for i in range(need_idx,idx+CNT_PER_ONEDATA-1):
-        print(need_idx)
-        prices.append(data_list[need_idx][1])
+    for i in range(idx,idx+CNT_PER_ONEDATA-1):
+        prices.append(data_list[idx][1])
     return prices
 
 def GetLabel( idx ):
-    global train_idx_list
     global data_list
     prices = []
-    print(data_list)
-    need_idx = train_idx_list[idx]
-    return data_list[need_idx+CNT_PER_ONEDATA+NEED_FUTURE_POS-1][1]   
+    return data_list[idx+CNT_PER_ONEDATA+NEED_FUTURE_POS-1][1]   
     
 def GetNextTrainData( size ):
+    global train_idx_list
     global train_current
     print( "GetNextTrainData:" + str(size) )
     retDataList = []
     retLabelList = []
     for i in range( train_current, train_current + size ):
-        data = GetData(i)
-        label = GetLabel(i)
+        need_idx = train_idx_list[i]
+        data = GetData(need_idx)
+        need_idx = train_idx_list[i]
+        label = GetLabel(need_idx)
         retDataList.append(data)
         retLabelList.append(label)
     train_current = train_current + size

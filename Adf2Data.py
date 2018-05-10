@@ -7,21 +7,21 @@ GET_PRICE_TERM = 10
 import os
 import glob
 import datetime
-
 def WriteMergeData( priceList, pairName ):
-    with open(".\\Data\\" + pairName + ".dat", 'w') as f:
+    with open(r'./Data/' + pairName + ".dat", 'w') as f:
         for line in priceList:
             f.writelines(line)
 
 
-#ƒtƒ@ƒCƒ‹ƒpƒX‚Æƒtƒ@ƒCƒ‹‚Ì1—ñ–Úî•ñ‚©‚ç“ú•t‚ğì¬‚·‚é
+#ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½pï¿½Xï¿½Æƒtï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Úï¿½ñ‚©‚ï¿½ï¿½ï¿½tï¿½ï¿½ì¬ï¿½ï¿½ï¿½ï¿½
 def makeDateTime( path, col ) -> datetime:
-    #path->“ú•t
+    #path->ï¿½ï¿½ï¿½t
     # ex) .\adf\usdjpy\2018\01\03.adf -> xxx,2018,01,03
-    dirs = path.rsplit("\\",3)
+    print(path)
+    dirs = path.rsplit(r'/',3)
     dirs[3] = dirs[3].split(".")[0]
 
-    #1—ñ–Úƒf[ƒ^‚ğŠÔ‚É•ÏŠ·
+    #1ï¿½ï¿½Úƒfï¿½[ï¿½^ï¿½ï¿½Ô‚É•ÏŠï¿½
     #hh:mm:ss.sss -> hh,mm,ss,sss
     seconds = col.split(".")
     if len(seconds) == 1:
@@ -42,17 +42,18 @@ def checkData(listData, curIdx, continueCnt):
         d = GetDateTime(listData[i])
         
 def Adf2Data( pairName ):        
-    listADF = glob.glob(".\\"+ADF_DIR_NAME+"\\"+pairName+"\\**\\*.adf",recursive=True)
+    listADF = glob.glob(r'./'+ADF_DIR_NAME+r'/'+pairName+r'/**/*.adf',recursive=True)
 
     priceData = {}
     data = []
 
     for adf in listADF:
-        #adf->“ú•t
+        #adf->ï¿½ï¿½ï¿½t
         # ex) .\adf\usdjpy\2018\01\03.adf -> xxx,2018,01,03
-        dirs = adf.rsplit("\\",3)
+        print(adf)
+        dirs = adf.rsplit(r'/',3)
         dirs[3] = dirs[3].split(".")[0]
-        date = dirs[1] + "/" + dirs[2] + "/" + dirs[3]
+        date = dirs[1] + r'/' + dirs[2] + r'/' + dirs[3]
 
         with open(adf) as f:
             lines = f.readlines()

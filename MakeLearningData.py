@@ -36,11 +36,11 @@ def checkprice( price ):
         return True
     return False
 
-def checkdata( start, cnt, listData ):
+def checkdata( start, cnt, listData, needFuturePos ):
     if start + cnt + 100 >= len(listData):
         return False
     prevDate = None
-    for i in range( start, start + cnt + 100 ):
+    for i in range( start, start + cnt + needFuturePos ):
         if checktime( listData[i][0] ) == False or checkprice( listData[i][1] ) == False:
                
             print(listData[i])
@@ -55,8 +55,8 @@ def checkdata( start, cnt, listData ):
 
     return True
 
-def MakeData( pairName ):
-    path = ".\\Data\\"+ pairName + ".dat"
+def MakeData( pairName, cntPerOneData, needFuturePos ):
+    path = r'./Data/'+ pairName + ".dat"
     if os.path.exists(path) == False:
         a2d.Adf2Data( pairName )
         
@@ -73,11 +73,11 @@ def MakeData( pairName ):
     for i in range(0,len(priceData)):
         if i % 1000 == 0:
             print(i)
-        if checkdata( i, 1000, priceData ) == True:
+        if checkdata( i, cntPerOneData, priceData, needFuturePos ) == True:
             listDataIdxs.append(i)
 
     if len(listDataIdxs) > 0:
-        with open( ".\\Data\\" + pairName + ".idx",'w') as f:
+        with open( r'./Data/' + pairName + ".idx",'w') as f:
             for idx in listDataIdxs:
                 f.write(str(idx)+"\n")
 
