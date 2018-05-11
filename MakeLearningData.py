@@ -72,8 +72,6 @@ def MakeData( pairName, cntPerOneData, needFuturePos ):
     print("check start")
     listDataIdxs = []
     for i in range(0,len(priceData)):
-        if i % 1000 == 0:
-            print(i)
         if checkdata( i, cntPerOneData, priceData, needFuturePos ) == True:
             listDataIdxs.append(i)
 
