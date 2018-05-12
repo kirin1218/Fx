@@ -57,6 +57,7 @@ def checkdata( start, cnt, listData, needFuturePos ):
 def MakeData( pairName, cntPerOneData, needFuturePos ):
     path = r'./Data/'+ pairName + ".dat"
     if os.path.exists(path) == False:
+        print("dat file not exist!")
         a2d.Adf2Data( pairName )
         
     priceData = []
@@ -70,8 +71,6 @@ def MakeData( pairName, cntPerOneData, needFuturePos ):
     print("check start")
     listDataIdxs = []
     for i in range(0,len(priceData)):
-        if i % 1000 == 0:
-            print(i)
         if checkdata( i, cntPerOneData, priceData, needFuturePos ) == True:
             listDataIdxs.append(i)
 

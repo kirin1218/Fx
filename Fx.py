@@ -81,13 +81,15 @@ def LoadDataFile( pairName ):
                         if start <= counter and counter <= end:
                             d,p = ParseDatLineData(line)
                             data_list[counter] = [d,p]
+                            print("add data_list:"+str(counter))
                             #print(data_list[counter])
+                            prev_counter = counter
                         if counter == label:
                             d,p = ParseDatLineData(line)
+                            print("add data_list:"+str(counter))
                             data_list[counter] = [d,p]
                             break
                     counter = counter+1
-                prev_counter = counter
         if len(data_list) > 0:
             print("load dat file success")
         return len(data_list)
@@ -111,7 +113,6 @@ def GetData( idx ):
     prices = []
     for i in range(idx,idx+CNT_PER_ONEDATA-1):
         prices.append(data_list[idx][1])
-    return prices
 
 def GetLabel( idx ):
     global data_list
@@ -125,6 +126,7 @@ def GetNextTrainData( size ):
     retDataList = []
     retLabelList = []
     for i in range( train_current, train_current + size ):
+        print("need_idx:"+str(i))
         need_idx = train_idx_list[i]
         data = GetData(need_idx)
         need_idx = train_idx_list[i]
@@ -135,7 +137,7 @@ def GetNextTrainData( size ):
     return retDataList,retLabelList
 
 def GetTestData():
-    print( "GetNextTrainData"  )
+    print( "GetTestData"  )
     retDataList = []
     retLabelList = []
     for i in test_idx_list: 
