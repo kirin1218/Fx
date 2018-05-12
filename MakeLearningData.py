@@ -13,8 +13,7 @@ def Data2List( line ):
     seconds = time[2].split('.')
     if len(seconds) == 1:
         return None,0
-    price = cells[2]
-
+    price = cells[2].split('\n')[0]
     d = datetime.datetime(int(date[0]),int(date[1]),int(date[2]),
             int(time[0]),int(time[1]),int(seconds[0]),int(seconds[1])*1000)
 
