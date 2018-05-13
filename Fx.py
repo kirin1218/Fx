@@ -4,28 +4,33 @@ import os
 import random
 import Adf2Data as a2d
 import MakeLearningData as mld
+import DataConvert as dc
 
 # Const
 TRAIN_SIZE = 100
 TEST_SIZE = 30
-CNT_PER_ONEDATA = 100
-NEED_FUTURE_POS = 100
+CNT_PER_ONEDATA = 60
+NEED_FUTURE_POS = 1
 train_current = 0
 train_idx_list = []
 test_idx_list = []
 data_list = {}
 
 #idxファイルを読み込む
-def LoadIdxFile( pairName ):
+def LoadIdxFile( pairName, tick ):
     print("load idx file")
     global train_current
     global train_idx_list
     global test_idx_list
 
+    tick_name = ''
+    if tick == 1:
+        tick_name = '_1M'
     train_current = 0
-    path = '.'+os.sep+'Data'+os.sep + pairName + ".idx"
+    path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + ".idx"
+
     if os.path.exists( path ) == False:
-        mld.MakeData( pairName, CNT_PER_ONEDATA, NEED_FUTURE_POS )
+        mld.MakeData( pairName, CNT_PER_ONEDATA, NEED_FUTURE_POS, tick )
 
     idxList = []
     if os.path.exists( path ) != False:
@@ -147,11 +152,15 @@ def GetTestData():
         retLabelList.append(label)
     return retDataList,retLabelList
 
+if __name__ == '__main__':
+    if LoadIdxFile("USDJPY",1) != False:
+        SetIdxCountSize( TRAIN_SIZE, TEST_SIZE )
+
 #訓練用とテスト用のデータidxファイルを読み込む
-if LoadIdxFile("USDJPY") != False:
-    SetIdxCountSize( TRAIN_SIZE, TEST_SIZE )
-    LoadDataFile("USDJPY")
-    train_data,train_label = GetNextTrainData( 100 )
-    test_data,test_label = GetTestData()
-else:
-    print("Load idx file error")
+#if LoadIdxFile("USDJPY") != False:
+#   SetIdxCountSize( TRAIN_SIZE, TEST_SIZE )
+#   LoadDataFile("USDJPY")
+#   train_data,train_label = GetNextTrainData( 100 )
+#   test_data,test_label = GetTestData()
+#else:
+#   print("Load idx file error")

@@ -18,7 +18,7 @@ def writeTickData(path, listTick):
         for tick in listTick:
             line = tick.startTime.strftime('%Y/%m/%d,%H:%M:%S.%f')+','+str(tick.st)+','+str(tick.hi)+','+str(tick.lo)+','+str(tick.en)
             print(line)
-            f.write(line)
+            f.write(line+'\n')
     return
 
 def DatTo1Min(pairName):
@@ -51,6 +51,7 @@ def DataToTcik(pairName,tick):
         t = None
 
         for line in lines:
+            print(line)
             dt,p = mld.Data2List(line)
             price = float(p)
             #未登録状態->次の分になるまでは何もしない
@@ -108,11 +109,11 @@ def DataToTcik(pairName,tick):
                     else:
                         startTime = dt + datetime.timedelta(minutes=tick) - datetime.timedelta(seconds=dt.second) - datetime.timedelta(microseconds=dt.microsecond)
                         endTime = startTime + datetime.timedelta(minutes=tick)
-                        t = ti.TickInfo(startTime,endTime)
+                        t = ti.TickInfo(stime=startTime,en=endTime)
         return tick_list
         #for i in range(0,len(tick_list)):
         #    tick_list[i].printData()
                    
 if __name__ == '__main__':
-    #DatTo1Min('USDJPY')
-    DatTo15Min('USDJPY')
+    DatTo1Min('USDJPY')
+    #DatTo15Min('USDJPY')
