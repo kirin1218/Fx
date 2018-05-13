@@ -8,7 +8,7 @@ import os
 import glob
 import datetime
 def WriteMergeData( priceList, pairName ):
-    with open(r'./Data/' + pairName + ".dat", 'w') as f:
+    with open('.' + os.sep + 'Data' + os.sep + pairName + ".dat", 'w') as f:
         for line in priceList:
             f.writelines(line)
 
@@ -17,8 +17,9 @@ def WriteMergeData( priceList, pairName ):
 def makeDateTime( path, col ) -> datetime:
     #path->���t
     # ex) .\adf\usdjpy\2018\01\03.adf -> xxx,2018,01,03
+    #path = path.replace('/',os.sep)
     print(path)
-    dirs = path.rsplit(r'/',3)
+    dirs = path.rsplit(os.sep,3)
     dirs[3] = dirs[3].split(".")[0]
 
     #1��ڃf�[�^��Ԃɕϊ�
@@ -42,7 +43,10 @@ def checkData(listData, curIdx, continueCnt):
         d = GetDateTime(listData[i])
         
 def Adf2Data( pairName ):        
-    listADF = glob.glob(r'./'+ADF_DIR_NAME+r'/'+pairName+r'/**/*.adf',recursive=True)
+    dirname ='.'+os.sep+'Data'+os.sep
+    if os.path.exists(dirname) == False:
+        os.mkdir(dirname)
+    listADF = glob.glob('.'+os.sep+ADF_DIR_NAME+os.sep+pairName+os.sep+'**'+os.sep+'*.adf',recursive=True)
 
     priceData = {}
     data = []
@@ -51,9 +55,9 @@ def Adf2Data( pairName ):
         #adf->���t
         # ex) .\adf\usdjpy\2018\01\03.adf -> xxx,2018,01,03
         print(adf)
-        dirs = adf.rsplit(r'/',3)
+        dirs = adf.rsplit(os.sep,3)
         dirs[3] = dirs[3].split(".")[0]
-        date = dirs[1] + r'/' + dirs[2] + r'/' + dirs[3]
+        date = dirs[1] + os.sep + dirs[2] + os.sep + dirs[3]
 
         with open(adf) as f:
             lines = f.readlines()

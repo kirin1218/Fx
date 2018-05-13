@@ -8,7 +8,7 @@ def Data2List( line ):
     #2016/10/18,08:26:46.123,103.865
     cells = line.split(',')
 
-    date = cells[0].split('/')
+    date = cells[0].split(os.sep)
     time = cells[1].split(':')
     seconds = time[2].split('.')
     if len(seconds) == 1:
@@ -55,7 +55,7 @@ def checkdata( start, cnt, listData, needFuturePos ):
     return True
 
 def MakeData( pairName, cntPerOneData, needFuturePos ):
-    path = r'./Data/'+ pairName + ".dat"
+    path = '.'+os.sep+'Data'+os.sep + pairName + ".dat"
     if os.path.exists(path) == False:
         print("dat file not exist!")
         a2d.Adf2Data( pairName )
@@ -75,7 +75,7 @@ def MakeData( pairName, cntPerOneData, needFuturePos ):
             listDataIdxs.append(i)
 
     if len(listDataIdxs) > 0:
-        with open( r'./Data/' + pairName + ".idx",'w') as f:
+        with open( '.'+os.sep+'Data'+os.sep + pairName + ".idx",'w') as f:
             for idx in listDataIdxs:
                 f.write(str(idx)+"\n")
 

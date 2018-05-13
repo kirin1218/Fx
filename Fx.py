@@ -23,7 +23,7 @@ def LoadIdxFile( pairName ):
     global test_idx_list
 
     train_current = 0
-    path = r'./Data/' + pairName + ".idx"
+    path = '.'+os.sep+'Data'+os.sep + pairName + ".idx"
     if os.path.exists( path ) == False:
         mld.MakeData( pairName, CNT_PER_ONEDATA, NEED_FUTURE_POS )
 
@@ -65,7 +65,7 @@ def LoadDataFile( pairName ):
     needList.extend(test_idx_list)
     needList.sort()
     print( "needlistsize:"+str(len(needList)))
-    path = r'./Data/' + pairName + ".dat"
+    path = '.'+os.sep+'Data'+os.sep + pairName + ".dat"
     print(data_list)
     if os.path.exists(path) != False:
         prev_counter = 0
