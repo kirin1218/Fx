@@ -13,8 +13,31 @@ def dt2str( dt ):
 def delta2minute( delta ):
     return delta.seconds/60
 
+def writeTickData(path, listTick):
+    with open(path,'w') as f:
+        for tick in listTick:
+            line = tick.startTime.strftime('%Y/%m/%d,%H:%M:%S.%f')+','+str(tick.st)+','+str(tick.hi)+','+str(tick.lo)+','+str(tick.en)
+            print(line)
+            f.write(line)
+    return
+
 def DatTo1Min(pairName):
-    return DataToTcik(pairName,1)
+    listTick = DataToTcik(pairName,1)
+    if len(listTick) > 0:
+        path = '.'+os.sep+'Data'+os.sep+ pairName + "_1M.dat"
+        writeTickData(path,listTick)
+    else:
+        print("error make 1minute tickData")
+    return
+ 
+def DatTo15Min(pairName):
+    listTick = DataToTcik(pairName,15)
+    if len(listTick) > 0:
+        path = '.'+os.sep+'Data'+os.sep+ pairName + "_15M.dat"
+        writeTickData(path,listTick)
+    else:
+        print("error make 1minute tickData")
+    return
     
 def DataToTcik(pairName,tick):
     #データファイルを各Tickデータに変換する
@@ -86,8 +109,10 @@ def DataToTcik(pairName,tick):
                         startTime = dt + datetime.timedelta(minutes=tick) - datetime.timedelta(seconds=dt.second) - datetime.timedelta(microseconds=dt.microsecond)
                         endTime = startTime + datetime.timedelta(minutes=tick)
                         t = ti.TickInfo(startTime,endTime)
-        for i in range(0,len(tick_list)):
-            tick_list[i].printData()
+        return tick_list
+        #for i in range(0,len(tick_list)):
+        #    tick_list[i].printData()
                    
 if __name__ == '__main__':
-    DatTo1Min('USDJPY')
+    #DatTo1Min('USDJPY')
+    DatTo15Min('USDJPY')
