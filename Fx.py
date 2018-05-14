@@ -83,7 +83,7 @@ def LoadDataFile( pairName, tick ):
     print(data_list)
 
     if os.path.exists(path) != False:
-        prev_counter = 0
+        prev_counter = -1
         for i in needList:
             print( "needidx:"+str(i))
             counter = 0
@@ -115,12 +115,16 @@ def SetIdxCountSize( trainsize, testsize ):
         train_idx_list = train_idx_list[:trainsize]
         test_idx_list = test_idx_list[:testsize]
         return True
+    print( "error shortage data train:{0} test:{1}".format( \
+        len(train_idx_list),len(test_idx_list)))
     return False
 
 def GetData( idx ):
     global data_list
     prices = []
     for i in range(idx,idx+CNT_PER_ONEDATA-1):
+        data = data_list[i]
+        print(data)
         st = data_list[i][1]
         hi = data_list[i][2]
         lo = data_list[i][3]
@@ -162,10 +166,10 @@ def GetTestData():
 
 def read_data_sets( train_size, test_size, one_hot=False):
     if LoadIdxFile("USDJPY", 1) != False:
-        SetIdxCountSize( train_size, test_size )
-        LoadDataFile("USDJPY",1)
-        train_data,train_label = GetNextTrainData( train_size )
-        test_data,test_label = GetTestData()
+        if SetIdxCountSize( train_size, test_size ) != False:
+            if LoadDataFile("USDJPY",1) > 0:
+                train_data,train_label = GetNextTrainData( train_size )
+                test_data,test_label = GetTestData()
 
 if __name__ == '__main__':
     if LoadIdxFile("USDJPY",1) != False:

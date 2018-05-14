@@ -5,7 +5,7 @@ import Fx
 
 #mnistデータを格納したオブジェクトを呼び出す
 #mnist = input_data.read_data_sets("data/", one_hot=True)
-fxDS = Fx.read_data_sets(train_size=1000,test_size=100,one_hot=True)
+fxDS = Fx.read_data_sets(train_size=240,test_size=100,one_hot=True)
 '''
 """モデル構築開始"""
 #入力データ整形
