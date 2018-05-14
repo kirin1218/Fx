@@ -25,7 +25,7 @@ def TickData2List( line ):
     #2016/10/18,08:26:46.123,103.865
     cells = line.split(',')
 
-    date = cells[0].split(os.sep)
+    date = cells[0].split('/')
     time = cells[1].split(':')
     seconds = time[2].split('.')
     if len(seconds) == 1:
@@ -34,7 +34,7 @@ def TickData2List( line ):
     st = cells[2]
     hi = cells[3]
     lo = cells[4]
-    en = cless[5].split('\n')[0]
+    en = cells[5].split('\n')[0]
     d = datetime.datetime(int(date[0]),int(date[1]),int(date[2]),
             int(time[0]),int(time[1]),int(seconds[0]),int(seconds[1])*1000)
 
@@ -57,7 +57,7 @@ def checkprice( price ):
         return True
     return False
 
-def checkdata( start, cnt, listData, needFuturePos ):
+def checkdata( start, cnt, listData, needFuturePos, tick ):
     if start + cnt + needFuturePos >= len(listData):
         return False
     prevDate = None

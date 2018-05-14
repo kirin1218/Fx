@@ -61,17 +61,27 @@ def ParseDatLineData( line ):
     d,p = mld.Data2List(line)
     return d,p
 
-def LoadDataFile( pairName ):
+def ParseTickDatLine( line ):
+    d,st,hi,lo,en = mld.TickData2List(line)
+    return d,st,hi,lo,en
+
+
+def LoadDataFile( pairName, tick ):
     global data_list
     print("load dat file")
     counter = 0
-    aryIdx = 0
     needList = train_idx_list
     needList.extend(test_idx_list)
     needList.sort()
     print( "needlistsize:"+str(len(needList)))
-    path = '.'+os.sep+'Data'+os.sep + pairName + ".dat"
+
+    tick_name = ''
+    if tick == 1:
+        tick_name = '_1M'
+    path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + ".dat"
+
     print(data_list)
+
     if os.path.exists(path) != False:
         prev_counter = 0
         for i in needList:
@@ -83,17 +93,13 @@ def LoadDataFile( pairName ):
             with open(path) as f:
                 for line in f:
                     if prev_counter < counter:
-                        if start <= counter and counter <= end:
-                            d,p = ParseDatLineData(line)
-                            data_list[counter] = [d,p]
+                        if ( start <= counter and counter <= end ) or counter == label:
+                            d,st,hi,lo,en = ParseTickDatLine(line)
+                            data_list[counter] = [d,st,hi,lo,en]
                             print("add data_list:"+str(counter))
-                            #print(data_list[counter])
+                            if counter == label:
+                                break
                             prev_counter = counter
-                        if counter == label:
-                            d,p = ParseDatLineData(line)
-                            print("add data_list:"+str(counter))
-                            data_list[counter] = [d,p]
-                            break
                     counter = counter+1
         if len(data_list) > 0:
             print("load dat file success")
@@ -107,9 +113,7 @@ def SetIdxCountSize( trainsize, testsize ):
     global test_idx_list
     if len(train_idx_list) >= trainsize and len(test_idx_list) >= testsize:
         train_idx_list = train_idx_list[:trainsize]
-        train_idx_size = len(train_idx_list)
         test_idx_list = test_idx_list[:testsize]
-        test_idx_size = len(test_idx_list)
         return True
     return False
 
@@ -117,12 +121,16 @@ def GetData( idx ):
     global data_list
     prices = []
     for i in range(idx,idx+CNT_PER_ONEDATA-1):
-        prices.append(data_list[idx][1])
+        st = data_list[i][1]
+        hi = data_list[i][2]
+        lo = data_list[i][3]
+        en = data_list[i][4]
+        prices.append([st,hi,lo,en])
+    return prices
 
 def GetLabel( idx ):
     global data_list
-    prices = []
-    return data_list[idx+CNT_PER_ONEDATA+NEED_FUTURE_POS-1][1]   
+    return data_list[idx+CNT_PER_ONEDATA+NEED_FUTURE_POS-1][4]   
     
 def GetNextTrainData( size ):
     global train_idx_list
@@ -151,6 +159,13 @@ def GetTestData():
         retDataList.append(data)
         retLabelList.append(label)
     return retDataList,retLabelList
+
+def read_data_sets( train_size, test_size, one_hot=False):
+    if LoadIdxFile("USDJPY", 1) != False:
+        SetIdxCountSize( train_size, test_size )
+        LoadDataFile("USDJPY",1)
+        train_data,train_label = GetNextTrainData( train_size )
+        test_data,test_label = GetTestData()
 
 if __name__ == '__main__':
     if LoadIdxFile("USDJPY",1) != False:
