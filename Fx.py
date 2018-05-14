@@ -170,11 +170,36 @@ def read_data_sets( train_size, test_size, one_hot=False):
             if LoadDataFile("USDJPY",1) > 0:
                 train_data,train_label = GetNextTrainData( train_size )
                 test_data,test_label = GetTestData()
+                fxTrainData = FxDataSet()
+                fxTrainData.set( train_data, train_label )
+                fxTestData = FxDataSet()
+                fxTestData.set( test_data, test_label )
+                fxTFData = FxTFData()
+                fxTFData.set( fxTrainData, fxTestData)
+                return fxTFData
+    return None
 
 if __name__ == '__main__':
     if LoadIdxFile("USDJPY",1) != False:
         SetIdxCountSize( TRAIN_SIZE, TEST_SIZE )
 
+class FxDataSet():
+    def __init__(self):
+        self.datas = []
+        self.labels = []
+    
+    def set( self, datas, labels ):
+        self.datas = datas
+        self.lables = labels
+
+class FxTFData():
+    def __init__(self):
+        self.train =[]
+        self.test = []
+    
+    def set( self, train, test ):
+        self.train = train
+        self.test = test
 #訓練用とテスト用のデータidxファイルを読み込む
 #if LoadIdxFile("USDJPY") != False:
 #   SetIdxCountSize( TRAIN_SIZE, TEST_SIZE )
