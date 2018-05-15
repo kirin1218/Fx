@@ -5,6 +5,7 @@ import random
 import Adf2Data as a2d
 import MakeLearningData as mld
 import DataConvert as dc
+import numpy as np
 
 # Const
 TRAIN_SIZE = 100
@@ -176,6 +177,8 @@ def read_data_sets( train_size, test_size, one_hot=False):
                 fxTestData.set( test_data, test_label )
                 fxTFData = FxTFData()
                 fxTFData.set( fxTrainData, fxTestData)
+                if one_hot != False:
+                    fxTFData.convOneHot()
                 return fxTFData
     return None
 
@@ -191,6 +194,24 @@ class FxDataSet():
     def set( self, datas, labels ):
         self.datas = datas
         self.lables = labels
+    
+    def convOneHot( self ):
+        size = len(self.datas)
+        if size > 0:
+            count = len(self.datas[0])
+            if count > 0:
+                newAry = []
+                for i in range(0,size):
+                    newAry.extend(self.datas[i])
+                if size == len(newAry):
+                    self.datas = newAry
+        size = len(self.labels)
+        if size > 0:
+            newAry = []
+            for i in range(0,size):
+                newAry.extend(self.labels[i])
+            if size == len(newAry):
+                self.labels = newAry
 
 class FxTFData():
     def __init__(self):
@@ -200,6 +221,10 @@ class FxTFData():
     def set( self, train, test ):
         self.train = train
         self.test = test
+
+    def convOneHot( self ):
+        self.train.convOneHot()
+        self.test.convOneHot()
 #訓練用とテスト用のデータidxファイルを読み込む
 #if LoadIdxFile("USDJPY") != False:
 #   SetIdxCountSize( TRAIN_SIZE, TEST_SIZE )
