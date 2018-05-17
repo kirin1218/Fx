@@ -188,31 +188,22 @@ if __name__ == '__main__':
 
 class FxDataSet():
     def __init__(self):
-        self.datas = []
-        self.labels = []
+        self.datas = None 
+        self.labels = None
     
     def set( self, datas, labels ):
-        self.datas = datas
-        self.lables = labels
+        self.datas = np.array(datas)
+        self.labels = np.array(labels)
     
     def convOneHot( self ):
-        size = len(self.datas)
-        if size > 0:
-            count = len(self.datas[0])
-            if count > 0:
-                newAry = []
-                for i in range(0,size):
-                    newAry.extend(self.datas[i])
-                if size == len(newAry):
-                    self.datas = newAry
-        size = len(self.labels)
-        if size > 0:
-            newAry = []
-            for i in range(0,size):
-                newAry.extend(self.labels[i])
-            if size == len(newAry):
-                self.labels = newAry
+        self.datas = self.datas.ravel()
+        self.labels = self.labels.ravel()
+    
+    def print(self):
+        print(self.datas)
+        print(self.labels)
 
+        
 class FxTFData():
     def __init__(self):
         self.train =[]

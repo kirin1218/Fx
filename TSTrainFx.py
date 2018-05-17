@@ -12,6 +12,8 @@ num_result = 3
 #mnistデータを格納したオブジェクトを呼び出す
 #mnist = input_data.read_data_sets("data/", one_hot=True)
 fxDS = Fx.read_data_sets(train_size=240,test_size=100,one_hot=True)
+fxDS.train_datas.print()
+'''
 print(fxDS.train.labels)
 """モデル構築開始"""
 x = tf.placeholder(tf.float32, [None, num_seq*num_input])
@@ -69,5 +71,3 @@ with tf.Session() as sess:
             acc_val = sess.run( accuracy, feed_dict={x:test_datas, y:test_labels})
             print('Step %d: accuracy = %.2f' % (step, acc_val))
 '''
-
-
