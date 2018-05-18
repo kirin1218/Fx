@@ -1,45 +1,49 @@
 #-*- coding:utf-8 -*-
 #from tensorflow.examples.tutorials.mnist import input_data
-#import tensorflow as tf
+import tensorflow as tf
 import Fx
 
 #入力データ整形
 num_seq = 4
 num_input = 60
 num_weight = 32
-num_result = 3
+num_result = 1
 
-#mnistデータを格納したオブジェクトを呼び出す
+#mnistデータを格納しimpoたオブジェクトを呼び出す
 #mnist = input_data.read_data_sets("data/", one_hot=True)
 fxDS = Fx.read_data_sets(train_size=240,test_size=100,one_hot=True)
 #fxDS.train.print()
-'''
+
 print(fxDS.train.labels)
 """モデル構築開始"""
-x = tf.placeholder(tf.float32, [None, num_seq*num_input])
-#(バッチサイズ,高さ, 幅)の2階テンソルに変換
-input = tf.reshape(x, [-1, num_seq, num_input])
+with tf.name_scope("input") as scope: 
+    x = tf.placeholder(tf.float32, [None, num_seq*num_input])
+    #(バッチサイズ,高さ, 幅)の2階テンソルに変換
+    input = tf.reshape(x, [-1, num_seq, num_input])
 
 #ユニット数128個のLSTMセル
 #三段に積む
-stacked_cells = []
-stacked_cells.append(tf.nn.rnn_cell.LSTMCell(num_units=num_weight))
-stacked_cells.append(tf.nn.rnn_cell.LSTMCell(num_units=num_weight))
-stacked_cells.append(tf.nn.rnn_cell.LSTMCell(num_units=num_weight))
+with tf.name_scope("hidden") as scope: 
+    stacked_cells = []
+    stacked_cells.append(tf.nn.rnn_cell.LSTMCell(num_units=num_weight))
+    stacked_cells.append(tf.nn.rnn_cell.LSTMCell(num_units=num_weight))
+    stacked_cells.append(tf.nn.rnn_cell.LSTMCell(num_units=num_weight))
 
-cell = tf.nn.rnn_cell.MultiRNNCell(cells=stacked_cells)
+    cell = tf.nn.rnn_cell.MultiRNNCell(cells=stacked_cells)
 
-outputs, states = tf.nn.dynamic_rnn(cell=cell, inputs=input, dtype=tf.float32)
+    outputs, states = tf.nn.dynamic_rnn(cell=cell, inputs=input, dtype=tf.float32)
 
 #3階テンソルを2階テンソルのリストに変換
 outputs_list = tf.unstack(outputs, axis=1)
 #最終時系列情報を取得
 last_output = outputs_list[-1]
 
-w = tf.Variable(tf.truncated_normal([num_weight,num_result], stddev=0.1))
-b = tf.Variable(tf.zeros([num_result]))
+with tf.name_scope("output") as scope: 
+    w = tf.Variable(tf.truncated_normal([num_weight,num_result], stddev=0.1))
+    b = tf.Variable(tf.zeros([num_result]))
 
-out = tf.nn.softmax(tf.matmul(last_output, w ) + b)
+    #out = tf.nn.softmax(tf.matmul(last_output, w ) + b)
+    out = tf.matmul(last_output, w ) + b
 
 #正解データの型を定義
 y = tf.placeholder(tf.float32, [None, num_result])
@@ -70,4 +74,3 @@ with tf.Session() as sess:
         if step % 100 == 0:
             acc_val = sess.run( accuracy, feed_dict={x:test_datas, y:test_labels})
             print('Step %d: accuracy = %.2f' % (step, acc_val))
-'''
