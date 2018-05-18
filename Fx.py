@@ -96,7 +96,7 @@ def LoadDataFile( pairName, tick ):
                     if prev_counter < counter:
                         if ( start <= counter and counter <= end ) or counter == label:
                             d,st,hi,lo,en = ParseTickDatLine(line)
-                            data_list[counter] = [d,st,hi,lo,en]
+                            data_list[counter] = [d,[st,hi,lo,en]]
                             print("add data_list:"+str(counter))
                             if counter == label:
                                 break
@@ -126,16 +126,13 @@ def GetData( idx ):
     for i in range(idx,idx+CNT_PER_ONEDATA-1):
         data = data_list[i]
         print(data)
-        st = data_list[i][1]
-        hi = data_list[i][2]
-        lo = data_list[i][3]
-        en = data_list[i][4]
-        prices.append([st,hi,lo,en])
+        prices.append(data[1])
     return prices
 
 def GetLabel( idx ):
     global data_list
-    return data_list[idx+CNT_PER_ONEDATA+NEED_FUTURE_POS-1][4]   
+    price = data_list[idx+CNT_PER_ONEDATA+NEED_FUTURE_POS-1][1]
+    return price[3] 
     
 def GetNextTrainData( size ):
     global train_idx_list
@@ -197,7 +194,9 @@ class FxDataSet():
     
     def convOneHot( self ):
         self.datas = self.datas.ravel()
+        print('convert one hot', self.datas.shape)
         self.labels = self.labels.ravel()
+        print('convert one hot', self.labels.shape)
     
     def print(self):
         print(self.datas)
