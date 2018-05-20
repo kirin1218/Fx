@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 #from tensorflow.examples.tutorials.mnist import input_data
-import tensorflow as tf
+#import tensorflow as tf
 import Fx
 import numpy as np
 
@@ -8,13 +8,13 @@ import numpy as np
 num_seq = 4
 num_input = 60
 num_weight = 32
-num_result = 1
+num_result = 5
 
 #mnistデータを格納しimpoたオブジェクトを呼び出す
 #mnist = input_data.read_data_sets("data/", one_hot=True)
 fxDS = Fx.read_data_sets(train_size=240,test_size=100,one_hot=True)
 #fxDS.train.print()
-
+'''
 #print(fxDS.train.labels)
 """モデル構築開始"""
 with tf.name_scope("input") as scope: 
@@ -22,7 +22,6 @@ with tf.name_scope("input") as scope:
     #(バッチサイズ,高さ, 幅)の2階テンソルに変換
     input = tf.reshape(x, [-1, num_seq, num_input])
 
-'''
 init = tf.global_variables_initializer()
 
 with tf.Session() as sess:
@@ -37,7 +36,6 @@ with tf.Session() as sess:
     #print(train_datas.shape)
     #print(train_labels.shape)
     print(sess.run(input, feed_dict={x:train_datas}))
-'''
 #三段に積む
 with tf.name_scope("hidden") as scope: 
     stacked_cells = []
@@ -64,8 +62,8 @@ with tf.name_scope("output") as scope:
 #正解データの型を定義
 y = tf.placeholder(tf.float32, [None, num_result])
 #誤差関数（クロスエントロピー）
-loss = tf. reduce_mean( tf. square( y - out))
-#loss = tf.reduce_mean(-tf.reduce_sum(y * tf.log(out), axis=[1]))
+#loss = Tf. reduce_mean( tf. square( y - out))
+loss = tf.reduce_mean(-tf.reduce_sum(y * tf.log(out), axis=[1]))
 
 #訓練
 train_step = tf.train.GradientDescentOptimizer(0.1).minimize(loss)
@@ -93,6 +91,7 @@ with tf.Session() as sess:
         print(sess.run(loss, feed_dict={x:train_datas ,y:train_labels}))
 #
         #10階ごとに精度を検証
-        #if step % 100 == 0:
-        acc_val = sess.run( accuracy, feed_dict={x:test_datas, y:test_labels})
-        print('Step %d: accuracy = %.2f' % (step, acc_val))
+        if step % 100 == 0:
+            acc_val = sess.run( accuracy, feed_dict={x:test_datas, y:test_labels})
+            print('Step %d: accuracy = %.2f' % (step, acc_val))
+'''

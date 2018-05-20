@@ -131,8 +131,25 @@ def GetData( idx ):
 
 def GetLabel( idx ):
     global data_list
+    last_data = data_list[idx+CNT_PER_ONEDATA][1]
     price = data_list[idx+CNT_PER_ONEDATA+NEED_FUTURE_POS][1]
-    return price[3] 
+    diff = float(last_data)-float(price)
+    #~-3|-3~-1|-1~1|1~3|3~|
+    labels = [0 for i in range(5)]
+    label = 2
+    if diff < -3:
+        label = 0
+    elif -3 <= diff <= -1:
+        label = 1
+    elif -1 <= diff <= 1:
+        label = 0
+    elif 1 < diff <= 3:
+        label = 2
+    elif 3 < diff:
+        label = 3
+    labels[label] = 1
+
+    return labels
     
 def GetNextTrainData( size ):
     global train_idx_list
@@ -176,12 +193,9 @@ def read_data_sets( train_size, test_size, one_hot=False):
                 fxTFData.set( fxTrainData, fxTestData)
                 if one_hot != False:
                     fxTFData.convOneHot()
+                fxTFData.convNormalize()
                 return fxTFData
     return None
-
-if __name__ == '__main__':
-    if LoadIdxFile("USDJPY",1) != False:
-        SetIdxCountSize( TRAIN_SIZE, TEST_SIZE )
 
 class FxDataSet():
     def __init__(self):
@@ -197,6 +211,16 @@ class FxDataSet():
         self.labels = np.array(labels)
         self.sizeofset = self.datas.shape[1]
         self.sizeofdata = self.datas.shape[2]
+
+    def zscore( self, x, axis=None ):
+        xmean = x.mean(axis=axis, keepdims=True)
+        xstd = np.std(x, axis=axis, keepdims=True)
+        zscore = (x-xmean)/xstd
+        return zscore
+
+    def convNormalize( self ):
+        self.datas = self.zscore(self.datas)
+        #self.labels = self.zscore(self.labels)
 
     def convOneHot( self ):
         self.datas = self.datas.ravel().reshape((-1,self.sizeofset*self.sizeofdata))
@@ -231,13 +255,16 @@ class FxTFData():
     def convOneHot( self ):
         self.train.convOneHot()
         self.test.convOneHot()
+
+    def convNormalize( self ):
+        self.train.convNormalize()
+        self.test.convNormalize()
     
-    
-#訓練用とテスト用のデータidxファイルを読み込む
-#if LoadIdxFile("USDJPY") != False:
-#   SetIdxCountSize( TRAIN_SIZE, TEST_SIZE )
-#   LoadDataFile("USDJPY")
-#   train_data,train_label = GetNextTrainData( 100 )
-#   test_data,test_label = GetTestData()
-#else:
-#   print("Load idx file error")
+if __name__ == '__main__':
+    train_data = [[[1.2,2.3],[3.4,5.6]],[[1.2,2.3],[3.4,5.6]]]
+    train_label = [[0,1,0],[1,0,0]]
+    fxTrainData = FxDataSet()
+    fxTrainData.set( train_data, train_label )
+    fxTrainData.convOneHot()
+    fxTrainData.convNormalize()
+
