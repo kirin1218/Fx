@@ -109,7 +109,7 @@ def DataToTcik(pairName,tick):
                     else:
                         startTime = dt + datetime.timedelta(minutes=tick) - datetime.timedelta(seconds=dt.second) - datetime.timedelta(microseconds=dt.microsecond)
                         endTime = startTime + datetime.timedelta(minutes=tick)
-                        t = ti.TickInfo(stime=startTime,en=endTime)
+                        t = ti.TickInfo(stime=startTime,et=endTime)
         return tick_list
         #for i in range(0,len(tick_list)):
         #    tick_list[i].printData()

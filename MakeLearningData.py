@@ -90,9 +90,10 @@ def MakeData( pairName, cntPerOneData, needFuturePos, tick ):
         if os.path.exists(datapath) == False:
             print("dat file not exist!")
             a2d.Adf2Data( pairName )
-            if tick == 1:
-                dc.DatTo1Min(pairName)
-                path = datapath
+        if tick == 1:
+            dc.DatTo1Min(pairName)
+        else:
+            path = datapath
     if tick == 1:
         priceData = []
         with open(path) as f:

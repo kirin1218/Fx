@@ -8,6 +8,8 @@ class TickInfo():
         self.lo = lo
         self.en = en
         self.setTime(stime,et)
+        if self.startTime is None or self.endTime is None:
+            a = 3
 
     def printData(self):
         print(self.startTime,self.endTime,self.st,self.hi,self.lo,self.en)

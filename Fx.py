@@ -89,12 +89,12 @@ def LoadDataFile( pairName, tick ):
             print( "needidx:"+str(i))
             counter = 0
             start = i
-            end = start + CNT_PER_ONEDATA - 1
+            end = start + CNT_PER_ONEDATA
             label = end + NEED_FUTURE_POS 
             with open(path) as f:
                 for line in f:
                     if prev_counter < counter:
-                        if ( start <= counter and counter <= end ) or counter == label:
+                        if ( start <= counter <= end ) or counter == label:
                             d,st,hi,lo,en = ParseTickDatLine(line)
                             data_list[counter] = [d,[st,hi,lo,en]]
                             print("add data_list:"+str(counter))
@@ -123,7 +123,7 @@ def SetIdxCountSize( trainsize, testsize ):
 def GetData( idx ):
     global data_list
     prices = []
-    for i in range(idx,idx+CNT_PER_ONEDATA-1):
+    for i in range(idx,idx+CNT_PER_ONEDATA):
         data = data_list[i]
         print(data)
         prices.append(data[1])
@@ -131,7 +131,7 @@ def GetData( idx ):
 
 def GetLabel( idx ):
     global data_list
-    price = data_list[idx+CNT_PER_ONEDATA+NEED_FUTURE_POS-1][1]
+    price = data_list[idx+CNT_PER_ONEDATA+NEED_FUTURE_POS][1]
     return price[3] 
     
 def GetNextTrainData( size ):
@@ -187,21 +187,37 @@ class FxDataSet():
     def __init__(self):
         self.datas = None 
         self.labels = None
-    
+        self.sizeofdata = 1
+        self.sizeofset = 1
+        self.cur_pos = 0
+        self.isonehot = False
+
     def set( self, datas, labels ):
         self.datas = np.array(datas)
         self.labels = np.array(labels)
-    
+        self.sizeofset = self.datas.shape[1]
+        self.sizeofdata = self.datas.shape[2]
+
     def convOneHot( self ):
-        self.datas = self.datas.ravel()
+        self.datas = self.datas.ravel().reshape((-1,self.sizeofset*self.sizeofdata))
         print('convert one hot', self.datas.shape)
-        self.labels = self.labels.ravel()
+        self.labels = self.labels.ravel().reshape((-1,1))
         print('convert one hot', self.labels.shape)
+        self.isonehot = True
     
     def print(self):
         print(self.datas)
         print(self.labels)
 
+    def next_batch(self,size):
+        spos = self.cur_pos#*self.sizeofdata*self.sizeofset
+        epos = spos + size#*self.sizeofdata*self.sizeofset
+        retdatas = self.datas[spos:epos]
+        retlabel = self.labels[spos:epos]
+        print(retdatas.shape)
+        print(retlabel)
+        self.cur_pos += size
+        return retdatas, retlabel
         
 class FxTFData():
     def __init__(self):
@@ -215,6 +231,8 @@ class FxTFData():
     def convOneHot( self ):
         self.train.convOneHot()
         self.test.convOneHot()
+    
+    
 #訓練用とテスト用のデータidxファイルを読み込む
 #if LoadIdxFile("USDJPY") != False:
 #   SetIdxCountSize( TRAIN_SIZE, TEST_SIZE )
