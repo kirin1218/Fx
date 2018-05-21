@@ -12,7 +12,7 @@ num_result = 5
 
 #mnistデータを格納しimpoたオブジェクトを呼び出す
 #mnist = input_data.read_data_sets("data/", one_hot=True)
-fxDS = Fx.read_data_sets(train_size=240,test_size=100,one_hot=True)
+fxDS = Fx.read_data_sets(train_size=60,test_size=30 ,one_hot=True)
 #fxDS.train.print()
 '''
 #print(fxDS.train.labels)

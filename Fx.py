@@ -216,8 +216,8 @@ class FxDataSet():
         self.isonehot = False
 
     def set( self, datas, labels ):
-        self.datas = np.array(datas)
-        self.labels = np.array(labels)
+        self.datas = np.array(datas,dtype=float)
+        self.labels = np.array(labels,dtype=int)
         self.sizeofset = self.datas.shape[1]
         self.sizeofdata = self.datas.shape[2]
 
@@ -229,7 +229,6 @@ class FxDataSet():
 
     def convNormalize( self ):
         self.datas = self.zscore(self.datas)
-        #self.labels = self.zscore(self.labels)
 
     def convOneHot( self ):
         self.datas = self.datas.ravel().reshape((-1,self.sizeofset*self.sizeofdata))
