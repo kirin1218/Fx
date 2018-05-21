@@ -203,6 +203,7 @@ def read_data_sets( train_size, test_size, one_hot=False):
                 if one_hot != False:
                     fxTFData.convOneHot()
                 fxTFData.convNormalize()
+                fxTFData.Save()
                 return fxTFData
     return None
 
@@ -250,6 +251,10 @@ class FxDataSet():
         print(retlabel)
         self.cur_pos += size
         return retdatas, retlabel
+    
+    def save(self):
+        path = '.'+os.sep+'Data'+os.sep +'train_' + str()
+        np.save('data,self.datas)
         
 class FxTFData():
     def __init__(self):
@@ -267,6 +272,10 @@ class FxTFData():
     def convNormalize( self ):
         self.train.convNormalize()
         self.test.convNormalize()
+    
+    def save(self):
+        self.train.save()
+        self.test.save()
     
 if __name__ == '__main__':
     train_data = [[[1.2,2.3],[3.4,5.6]],[[1.2,2.3],[3.4,5.6]]]
