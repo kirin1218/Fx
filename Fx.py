@@ -128,24 +128,31 @@ def GetData( idx ):
         print(data)
         prices.append(data[1])
     return prices
-
+min_diff = 99999.99
+max_diff = 0.0
 def GetLabel( idx ):
     global data_list
+    global min_diff
+    global max_diff
     last_data = data_list[idx+CNT_PER_ONEDATA][1]
     price = data_list[idx+CNT_PER_ONEDATA+NEED_FUTURE_POS][1]
-    diff = float(last_data)-float(price)
+    diff = float(last_data[3])-float(price[3])
+    if min_diff > diff:
+        min_diff = diff
+    if max_diff < diff:
+        max_diff = diff
     #~-3|-3~-1|-1~1|1~3|3~|
     labels = [0 for i in range(5)]
     label = 2
-    if diff < -3:
+    if diff < -0.03:
         label = 0
-    elif -3 <= diff <= -1:
+    elif -0.03 <= diff <= -0.01:
         label = 1
-    elif -1 <= diff <= 1:
+    elif -0.01 <= diff <= 0.01:
         label = 0
-    elif 1 < diff <= 3:
+    elif 0.01 < diff <= 0.03:
         label = 2
-    elif 3 < diff:
+    elif 0.03 < diff:
         label = 3
     labels[label] = 1
 
@@ -177,6 +184,8 @@ def GetTestData():
         label = GetLabel(i)
         retDataList.append(data)
         retLabelList.append(label)
+    global min_diff
+    global max_diff
     return retDataList,retLabelList
 
 def read_data_sets( train_size, test_size, one_hot=False):
