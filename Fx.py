@@ -188,7 +188,46 @@ def GetTestData():
     global max_diff
     return retDataList,retLabelList
 
+def MakeLastDataPath(pariName,tick,train_size,test_size):
+    tick_name = ''
+    if tick == 1:
+        tick_name = '_1M'
+    train_current = 0
+    path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + '_' + str(train_size) + '_' + str(test_size) + ".npy"
+    return path
+
+
+def ExistLastData(pariName,tick,train_size,test_size):
+    path = MakeLastDataPath(pairName,tick,train_size,test_size):
+    if os.path.exists(path) == False:
+        return False
+    else:
+        return True
+
+def DeleteLastData(pariName,tick,train_size,test_size):
+    path = MakeLastDataPath(pairName,tick,train_size,test_size):
+    os.remove(path)
+
+def LoadLastData(pariName,tick,train_size,test_size):
+    path = MakeLastDataPath(pairName,tick,train_size,test_size):
+ 
+
 def read_data_sets( train_size, test_size, one_hot=False):
+    if ExistLastData("USDJPY", 1, train_size, test_size) != False:
+        print('exist last test data,do you use this data?[y/n]')
+        ret = input('>> ')
+        if ret == 'y' or ret == 'Y':
+            train_data,train_label,test_data,test_label = LoadLastData("USDJPY",1)
+            fxTrainData = FxDataSet()
+            fxTrainData.set( train_data, train_label )
+            fxTestData = FxDataSet()
+            fxTestData.set( test_data, test_label )
+            fxTFData = FxTFData()
+            fxTFData.setNP( fxTrainData, fxTestData)
+            return fxTFData
+        else:
+            DeleteLastData("USDJPY",1)
+
     if LoadIdxFile("USDJPY", 1) != False:
         if SetIdxCountSize( train_size, test_size ) != False:
             if LoadDataFile("USDJPY",1) > 0:
