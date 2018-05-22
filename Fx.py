@@ -188,45 +188,57 @@ def GetTestData():
     global max_diff
     return retDataList,retLabelList
 
-def MakeLastDataPath(pariName,tick,train_size,test_size):
+def MakeLastDataPath(pairName,tick,size):
     tick_name = ''
     if tick == 1:
         tick_name = '_1M'
     train_current = 0
-    path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + '_' + str(train_size) + '_' + str(test_size) + ".npy"
-    return path
+    data_path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + '_data_' + str(size) + ".npy"
+    label_path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + '_label_' + str(size) + ".npy"
+    return data_path,label_path
 
 
-def ExistLastData(pariName,tick,train_size,test_size):
-    path = MakeLastDataPath(pairName,tick,train_size,test_size):
-    if os.path.exists(path) == False:
+def ExistLastData(pairName,tick,train_size,test_size):
+    traind_path,trainl_path = MakeLastDataPath(pairName,tick,train_size)
+    testd_path,testl_path = MakeLastDataPath(pairName,tick,test_size)
+    if os.path.exists(traind_path) == False or  os.path.exists(trainl_path) == False or os.path.exists(testd_path) == False or os.path.exists(testl_path) == False:
         return False
     else:
         return True
 
-def DeleteLastData(pariName,tick,train_size,test_size):
-    path = MakeLastDataPath(pairName,tick,train_size,test_size):
-    os.remove(path)
+def DeleteLastData(pairName,tick,train_size,test_size):
+    traind_path,trainl_path = MakeLastDataPath(pairName,tick,train_size)
+    testd_path,testl_path = MakeLastDataPath(pairName,tick,test_size)
+    os.remove(traind_path)
+    os.remove(trainl_path)
+    os.remove(testd_path)
+    os.remove(testl_path)
 
-def LoadLastData(pariName,tick,train_size,test_size):
-    path = MakeLastDataPath(pairName,tick,train_size,test_size):
- 
+
+def LoadLastData(pairName,tick,train_size,test_size):
+    traind_path,trainl_path = MakeLastDataPath(pairName,tick,train_size)
+    testd_path,testl_path = MakeLastDataPath(pairName,tick,test_size)
+    traind = np.load(traind_path)
+    trainl = np.load(trainl_path)
+    testd = np.load(testd_path)
+    testl = np.load(testl_path)
+    return traind,trainl,testd,testl
 
 def read_data_sets( train_size, test_size, one_hot=False):
     if ExistLastData("USDJPY", 1, train_size, test_size) != False:
         print('exist last test data,do you use this data?[y/n]')
         ret = input('>> ')
         if ret == 'y' or ret == 'Y':
-            train_data,train_label,test_data,test_label = LoadLastData("USDJPY",1)
-            fxTrainData = FxDataSet()
-            fxTrainData.set( train_data, train_label )
-            fxTestData = FxDataSet()
-            fxTestData.set( test_data, test_label )
-            fxTFData = FxTFData()
-            fxTFData.setNP( fxTrainData, fxTestData)
+            train_data,train_label,test_data,test_label = LoadLastData("USDJPY",1,train_size,test_size)
+            fxTrainData = FxDataSet(sizeofdata=4,sizeofset=60)
+            fxTrainData.setNP( train_data, train_label )
+            fxTestData = FxDataSet(sizeofdata=4,sizeofset=60)
+            fxTestData.setNP( test_data, test_label )
+            fxTFData = FxTFData('USDJPY',1)
+            fxTFData.set( fxTrainData, fxTestData)
             return fxTFData
         else:
-            DeleteLastData("USDJPY",1)
+            DeleteLastData("USDJPY",1,train_size,test_size)
 
     if LoadIdxFile("USDJPY", 1) != False:
         if SetIdxCountSize( train_size, test_size ) != False:
@@ -237,29 +249,36 @@ def read_data_sets( train_size, test_size, one_hot=False):
                 fxTrainData.set( train_data, train_label )
                 fxTestData = FxDataSet()
                 fxTestData.set( test_data, test_label )
-                fxTFData = FxTFData()
+                fxTFData = FxTFData('USDJPY',1)
                 fxTFData.set( fxTrainData, fxTestData)
                 if one_hot != False:
                     fxTFData.convOneHot()
                 fxTFData.convNormalize()
-                fxTFData.Save()
+                fxTFData.save()
                 return fxTFData
     return None
 
 class FxDataSet():
-    def __init__(self):
+    def __init__(self,sizeofset=1,sizeofdata=1):
         self.datas = None 
         self.labels = None
-        self.sizeofdata = 1
-        self.sizeofset = 1
+        self.sizeofdata = sizeofdata
+        self.sizeofset = sizeofset
+        self.sizeofbat = 1
         self.cur_pos = 0
         self.isonehot = False
 
     def set( self, datas, labels ):
         self.datas = np.array(datas,dtype=float)
         self.labels = np.array(labels,dtype=int)
+        self.sizeofbat = self.datas.shape[0]
         self.sizeofset = self.datas.shape[1]
         self.sizeofdata = self.datas.shape[2]
+
+    def setNP( self, datas, labels ):
+        self.datas = datas
+        self.labels = labels
+        self.sizeofbat = self.datas.shape[0]
 
     def zscore( self, x, axis=None ):
         xmean = x.mean(axis=axis, keepdims=True)
@@ -291,18 +310,25 @@ class FxDataSet():
         self.cur_pos += size
         return retdatas, retlabel
     
-    def save(self):
-        path = '.'+os.sep+'Data'+os.sep +'train_' + str()
-        np.save('data,self.datas)
-        
+    def save(self,pair,tick,size):
+        data_path,label_path = MakeLastDataPath(pair,tick,size)
+        np.save( data_path, self.datas)
+        np.save( label_path, self.labels)
+
 class FxTFData():
-    def __init__(self):
+    def __init__(self, pair, tick):
         self.train =[]
         self.test = []
+        self.train_size = 0
+        self.test_size = 0
+        self.tick = tick
+        self.pair = pair
     
     def set( self, train, test ):
         self.train = train
+        self.train_size  = train.sizeofbat
         self.test = test
+        self.test_size = test.sizeofbat
 
     def convOneHot( self ):
         self.train.convOneHot()
@@ -313,8 +339,8 @@ class FxTFData():
         self.test.convNormalize()
     
     def save(self):
-        self.train.save()
-        self.test.save()
+        self.train.save(self.pair,self.tick,self.train_size)
+        self.test.save(self.pair,self.tick,self.test_size)
     
 if __name__ == '__main__':
     train_data = [[[1.2,2.3],[3.4,5.6]],[[1.2,2.3],[3.4,5.6]]]
