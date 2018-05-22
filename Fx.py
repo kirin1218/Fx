@@ -149,11 +149,11 @@ def GetLabel( idx ):
     elif -0.03 <= diff <= -0.01:
         label = 1
     elif -0.01 <= diff <= 0.01:
-        label = 0
-    elif 0.01 < diff <= 0.03:
         label = 2
-    elif 0.03 < diff:
+    elif 0.01 < diff <= 0.03:
         label = 3
+    elif 0.03 < diff:
+        label = 4
     labels[label] = 1
 
     return labels
@@ -192,7 +192,6 @@ def MakeLastDataPath(pairName,tick,size):
     tick_name = ''
     if tick == 1:
         tick_name = '_1M'
-    train_current = 0
     data_path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + '_data_' + str(size) + ".npy"
     label_path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + '_label_' + str(size) + ".npy"
     return data_path,label_path
@@ -292,7 +291,7 @@ class FxDataSet():
     def convOneHot( self ):
         self.datas = self.datas.ravel().reshape((-1,self.sizeofset*self.sizeofdata))
         print('convert one hot', self.datas.shape)
-        self.labels = self.labels.ravel().reshape((-1,1))
+        self.labels = self.labels.ravel().reshape((self.sizeofbat,-1))
         print('convert one hot', self.labels.shape)
         self.isonehot = True
     

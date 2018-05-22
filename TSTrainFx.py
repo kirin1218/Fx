@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 #from tensorflow.examples.tutorials.mnist import input_data
-#import tensorflow as tf
+import tensorflow as tf
 import Fx
 import numpy as np
 
@@ -14,7 +14,6 @@ num_result = 5
 #mnist = input_data.read_data_sets("data/", one_hot=True)
 fxDS = Fx.read_data_sets(train_size=200,test_size=100,one_hot=True)
 #fxDS.train.print()
-'''
 #print(fxDS.train.labels)
 """モデル構築開始"""
 with tf.name_scope("input") as scope: 
@@ -22,20 +21,6 @@ with tf.name_scope("input") as scope:
     #(バッチサイズ,高さ, 幅)の2階テンソルに変換
     input = tf.reshape(x, [-1, num_seq, num_input])
 
-init = tf.global_variables_initializer()
-
-with tf.Session() as sess:
-    sess.run(init)
-    #テストデータをロード
-    test_datas = fxDS.test.datas.tolist()
-    test_labels = fxDS.test.labels.tolist()
-    #train_datas = np.arange(100*num_seq*num_input,dtype=float).reshape((100,-1))
-    #train_labels = np.arange(100,dtype=float)
-
-    train_datas, train_labels = fxDS.train.next_batch(50)
-    #print(train_datas.shape)
-    #print(train_labels.shape)
-    print(sess.run(input, feed_dict={x:train_datas}))
 #三段に積む
 with tf.name_scope("hidden") as scope: 
     stacked_cells = []
@@ -94,4 +79,3 @@ with tf.Session() as sess:
         if step % 100 == 0:
             acc_val = sess.run( accuracy, feed_dict={x:test_datas, y:test_labels})
             print('Step %d: accuracy = %.2f' % (step, acc_val))
-'''
