@@ -34,11 +34,12 @@ def TickData2List( line ):
     st = cells[2]
     hi = cells[3]
     lo = cells[4]
-    en = cells[5].split('\n')[0]
+    en = cells[5]
+    cnt = cells[6].split('\n')[0]
     d = datetime.datetime(int(date[0]),int(date[1]),int(date[2]),
             int(time[0]),int(time[1]),int(seconds[0]),int(seconds[1])*1000)
 
-    return d, st, hi, lo, en
+    return d, st, hi, lo, en, cnt
 
 
 def checktime( date ):
@@ -99,11 +100,11 @@ def MakeData( pairName, cntPerOneData, needFuturePos, tick ):
         with open(path) as f:
             lines = f.readlines()
             for line in lines:
-                d,st,hi,lo,en = TickData2List(line)
+                d,st,hi,lo,en,cnt = TickData2List(line)
                 if d != None:
                     if type(st) is str:
                         print(d,st,hi,lo,en)
-                        priceData.append([d,float(st),float(hi),float(lo),float(en)])
+                        priceData.append([d,float(st),float(hi),float(lo),float(en),int(cnt)])
                     else:
                         print(type(st))
 

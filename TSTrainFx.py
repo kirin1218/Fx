@@ -5,14 +5,14 @@ import Fx
 import numpy as np
 
 #入力データ整形
-num_seq = 4
+num_seq = 5
 num_input = 60
-num_weight = 32
-num_result = 5
+num_weight = 128
+num_result = 3
 
 #mnistデータを格納しimpoたオブジェクトを呼び出す
 #mnist = input_data.read_data_sets("data/", one_hot=True)
-fxDS = Fx.read_data_sets(train_size=10000,test_size=2000,one_hot=True)
+fxDS = Fx.read_data_sets(train_size=10000,test_size=200,one_hot=True)
 #fxDS.train.print()
 #print(fxDS.train.labels)
 """モデル構築開始"""
@@ -67,7 +67,7 @@ with tf.Session() as sess:
     test_datas = fxDS.test.datas
     test_labels = fxDS.test.labels
 
-    for i in range(100):
+    for i in range(200):
         step = i+1
         train_datas, train_labels = fxDS.train.next_batch(50) 
         #print(train_datas.shape)

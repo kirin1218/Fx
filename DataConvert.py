@@ -16,7 +16,8 @@ def delta2minute( delta ):
 def writeTickData(path, listTick):
     with open(path,'w') as f:
         for tick in listTick:
-            line = tick.startTime.strftime('%Y/%m/%d,%H:%M:%S.%f')+','+str(tick.st)+','+str(tick.hi)+','+str(tick.lo)+','+str(tick.en)
+            line = tick.startTime.strftime('%Y/%m/%d,%H:%M:%S.%f')+','+str(tick.st)+','+str(tick.hi)+','+str(tick.lo)+','+str(tick.en)+','+str(tick.cnt)
+
             print(line)
             f.write(line+'\n')
     return

@@ -7,6 +7,7 @@ class TickInfo():
         self.hi = hi
         self.lo = lo
         self.en = en
+        self.cnt = 1
         self.setTime(stime,et)
         if self.startTime is None or self.endTime is None:
             a = 3
@@ -40,3 +41,4 @@ class TickInfo():
         if self.st == 0:
             self.st = price
         self.en = price
+        self.cnt += 1

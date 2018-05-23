@@ -11,7 +11,7 @@ import numpy as np
 TRAIN_SIZE = 100
 TEST_SIZE = 30
 CNT_PER_ONEDATA = 60
-NEED_FUTURE_POS = 1
+NEED_FUTURE_POS = 10
 train_current = 0
 train_idx_list = []
 test_idx_list = []
@@ -63,8 +63,8 @@ def ParseDatLineData( line ):
     return d,p
 
 def ParseTickDatLine( line ):
-    d,st,hi,lo,en = mld.TickData2List(line)
-    return d,st,hi,lo,en
+    d,st,hi,lo,en,cnt = mld.TickData2List(line)
+    return d,st,hi,lo,en,cnt
 
 
 def LoadDataFile( pairName, tick ):
@@ -95,8 +95,8 @@ def LoadDataFile( pairName, tick ):
                 for line in f:
                     if prev_counter < counter:
                         if ( start <= counter <= end ) or counter == label:
-                            d,st,hi,lo,en = ParseTickDatLine(line)
-                            data_list[counter] = [d,[st,hi,lo,en]]
+                            d,st,hi,lo,en,cnt = ParseTickDatLine(line)
+                            data_list[counter] = [d,[st,hi,lo,en,cnt]]
                             print("add data_list:"+str(counter))
                             if counter == label:
                                 break
@@ -142,18 +142,14 @@ def GetLabel( idx ):
     if max_diff < diff:
         max_diff = diff
     #~-3|-3~-1|-1~1|1~3|3~|
-    labels = [0 for i in range(5)]
+    labels = [0 for i in range(3)]
     label = 2
-    if diff < -0.03:
+    if diff < -0.01:
         label = 0
-    elif -0.03 <= diff <= -0.01:
-        label = 1
     elif -0.01 <= diff <= 0.01:
+        label = 1
+    elif 0.01 < diff:
         label = 2
-    elif 0.01 < diff <= 0.03:
-        label = 3
-    elif 0.03 < diff:
-        label = 4
     labels[label] = 1
 
     return labels
@@ -266,7 +262,7 @@ class FxDataManager():
                     self.fxTFData.set( fxTrainData, fxTestData)
                     if self.one_hot != False:
                         self.fxTFData.convOneHot()
-                    self.fxTFData.convNormalize()
+                    #self.fxTFData.convNormalize()
                     self.fxTFData.save()
                     return self.fxTFData
         return None
