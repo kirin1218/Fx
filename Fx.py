@@ -64,7 +64,7 @@ def ParseDatLineData( line ):
 
 def ParseTickDatLine( line ):
     d,st,hi,lo,en,cnt = mld.TickData2List(line)
-    return d,st,hi,lo,en,cnt
+    return d,float(st),float(hi),float(lo),float(en),int(cnt)
 
 
 def LoadDataFile( pairName, tick ):

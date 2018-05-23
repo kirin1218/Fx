@@ -1,13 +1,13 @@
 #-*- coding:utf-8 -*-
 
 class TickInfo():
-    def __init__(self,st=0.0,hi=0.0,lo=999999.0,en=0.0,stime=None,et=None):
+    def __init__(self,st=0.0,hi=0.0,lo=999999.0,en=0.0,stime=None,et=None,cnt=1):
         self.initVal()
         self.st = st
         self.hi = hi
         self.lo = lo
         self.en = en
-        self.cnt = 1
+        self.cnt = cnt
         self.setTime(stime,et)
         if self.startTime is None or self.endTime is None:
             a = 3
