@@ -101,7 +101,11 @@ def MakeData( pairName, cntPerOneData, needFuturePos, tick ):
             for line in lines:
                 d,st,hi,lo,en = TickData2List(line)
                 if d != None:
-                    priceData.append([d,float(st),float(hi),float(lo),float(en)])
+                    if type(st) is str:
+                        print(d,st,hi,lo,en)
+                        priceData.append([d,float(st),float(hi),float(lo),float(en)])
+                    else:
+                        print(type(st))
 
 
         print("check start")

@@ -12,7 +12,7 @@ num_result = 5
 
 #mnistデータを格納しimpoたオブジェクトを呼び出す
 #mnist = input_data.read_data_sets("data/", one_hot=True)
-fxDS = Fx.read_data_sets(train_size=200,test_size=100,one_hot=True)
+fxDS = Fx.read_data_sets(train_size=10000,test_size=2000,one_hot=True)
 #fxDS.train.print()
 #print(fxDS.train.labels)
 """モデル構築開始"""
@@ -41,13 +41,15 @@ with tf.name_scope("output") as scope:
     w = tf.Variable(tf.truncated_normal([num_weight,num_result], stddev=0.1))
     b = tf.Variable(tf.zeros([num_result]))
 
-    #out = tf.nn.softmax(tf.matmul(last_output, w ) + b)
-    out = tf.matmul(last_output, w ) + b
+    out = tf.nn.softmax(tf.matmul(last_output, w ) + b)
+    #out = tf.matmul(last_output, w ) + b
 
 #正解データの型を定義
 y = tf.placeholder(tf.float32, [None, num_result])
 #誤差関数（クロスエントロピー）
 #loss = Tf. reduce_mean( tf. square( y - out))
+loss1 = tf.log(out)
+lossdata = y*tf.log(out)
 loss = tf.reduce_mean(-tf.reduce_sum(y * tf.log(out), axis=[1]))
 
 #訓練
@@ -65,16 +67,15 @@ with tf.Session() as sess:
     test_datas = fxDS.test.datas
     test_labels = fxDS.test.labels
 
-    for i in range(1):
+    for i in range(100):
         step = i+1
         train_datas, train_labels = fxDS.train.next_batch(50) 
-        print(train_datas.shape)
-        print(train_labels.shape)
+        #print(train_datas.shape)
+        #print(train_labels.shape)
         #print(sess.run(outputs, feed_dict={x:train_datas ,y:train_labels}))
         sess.run(train_step, feed_dict={x:train_datas ,y:train_labels})
-        print(sess.run(out, feed_dict={x:train_datas ,y:train_labels}))
-        print(sess.run(loss, feed_dict={x:train_datas ,y:train_labels}))
-#
+        #print(sess.run(out, feed_dict={x:train_datas ,y:train_labels}))
+        print(sess.run(accuracy, feed_dict={x:train_datas ,y:train_labels}))
         #10階ごとに精度を検証
         if step % 100 == 0:
             acc_val = sess.run( accuracy, feed_dict={x:test_datas, y:test_labels})

@@ -223,40 +223,55 @@ def LoadLastData(pairName,tick,train_size,test_size):
     testl = np.load(testl_path)
     return traind,trainl,testd,testl
 
-def read_data_sets( train_size, test_size, one_hot=False):
-    if ExistLastData("USDJPY", 1, train_size, test_size) != False:
-        print('exist last test data,do you use this data?[y/n]')
-        ret = input('>> ')
-        if ret == 'y' or ret == 'Y':
-            train_data,train_label,test_data,test_label = LoadLastData("USDJPY",1,train_size,test_size)
-            fxTrainData = FxDataSet(sizeofdata=4,sizeofset=60)
-            fxTrainData.setNP( train_data, train_label )
-            fxTestData = FxDataSet(sizeofdata=4,sizeofset=60)
-            fxTestData.setNP( test_data, test_label )
-            fxTFData = FxTFData('USDJPY',1)
-            fxTFData.set( fxTrainData, fxTestData)
-            return fxTFData
-        else:
-            DeleteLastData("USDJPY",1,train_size,test_size)
+def read_data_sets( train_size, test_size, one_hot=False, tick=1, sizeofset=60, labelpos = 1):
+    Mgr = FxDataManager(tick=tick,sizeofset=sizeofset,labelpos=labelpos,train_size=train_size,test_size=test_size,one_hot=one_hot)
+    return Mgr.MakeData()
 
-    if LoadIdxFile("USDJPY", 1) != False:
-        if SetIdxCountSize( train_size, test_size ) != False:
-            if LoadDataFile("USDJPY",1) > 0:
-                train_data,train_label = GetNextTrainData( train_size )
-                test_data,test_label = GetTestData()
-                fxTrainData = FxDataSet()
-                fxTrainData.set( train_data, train_label )
-                fxTestData = FxDataSet()
-                fxTestData.set( test_data, test_label )
-                fxTFData = FxTFData('USDJPY',1)
-                fxTFData.set( fxTrainData, fxTestData)
-                if one_hot != False:
-                    fxTFData.convOneHot()
-                fxTFData.convNormalize()
-                fxTFData.save()
-                return fxTFData
-    return None
+class FxDataManager():
+    def __init__(self,train_size,test_size,tick=1,labelpos=1,sizeofset=60,one_hot=False):
+        self.tick = tick
+        self.labelpos = labelpos
+        self.sizeofset = sizeofset
+        self.train_size = train_size
+        self.test_size = test_size
+        self.one_hot = one_hot
+        self.fxTFData = None
 
+    def MakeData(self):
+        if ExistLastData("USDJPY", self.tick, self.train_size, self.test_size) != False:
+            print('exist last test data,do you use this data?[y/n]')
+            ret = input('>> ')
+            if ret == 'y' or ret == 'Y':
+                train_data,train_label,test_data,test_label = LoadLastData("USDJPY",self.tick,self.train_size,self.test_size)
+                fxTrainData = FxDataSet(sizeofdata=4,sizeofset=60)
+                fxTrainData.setNP( train_data, train_label )
+                fxTestData = FxDataSet(sizeofdata=4,sizeofset=60)
+                fxTestData.setNP( test_data, test_label )
+                self.fxTFData = FxTFData('USDJPY',self.tick)
+                self.fxTFData.set( fxTrainData, fxTestData)
+                return self.fxTFData
+            else:
+                DeleteLastData("USDJPY",self.tick,self.train_size,self.test_size)
+
+        if LoadIdxFile("USDJPY", self.tick) != False:
+            if SetIdxCountSize( self.train_size, self.test_size ) != False:
+                if LoadDataFile("USDJPY",self.tick) > 0:
+                    train_data,train_label = GetNextTrainData( self.train_size )
+                    test_data,test_label = GetTestData()
+                    fxTrainData = FxDataSet()
+                    fxTrainData.set( train_data, train_label )
+                    fxTestData = FxDataSet()
+                    fxTestData.set( test_data, test_label )
+                    self.fxTFData = FxTFData('USDJPY',self.tick)
+                    self.fxTFData.set( fxTrainData, fxTestData)
+                    if self.one_hot != False:
+                        self.fxTFData.convOneHot()
+                    self.fxTFData.convNormalize()
+                    self.fxTFData.save()
+                    return self.fxTFData
+        return None
+
+    
 class FxDataSet():
     def __init__(self,sizeofset=1,sizeofdata=1):
         self.datas = None 
@@ -304,8 +319,8 @@ class FxDataSet():
         epos = spos + size#*self.sizeofdata*self.sizeofset
         retdatas = self.datas[spos:epos]
         retlabel = self.labels[spos:epos]
-        print(retdatas.shape)
-        print(retlabel)
+        #print(retdatas.shape)
+        #print(retlabel)
         self.cur_pos += size
         return retdatas, retlabel
     
