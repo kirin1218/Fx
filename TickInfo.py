@@ -9,8 +9,10 @@ class TickInfo():
         self.en = en
         self.cnt = cnt
         self.setTime(stime,et)
-        if self.startTime is None or self.endTime is None:
-            a = 3
+        self.futuredata = []
+
+    def setFutureData(self, futuredata ):
+        self.futuredata = futuredata
 
     def printData(self):
         print(self.startTime,self.endTime,self.st,self.hi,self.lo,self.en)
