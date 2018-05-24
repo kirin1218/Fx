@@ -45,12 +45,15 @@ def AnalyzeChangeDistrbution(pairName, tick, sizeofset, labelpos):
             adddata = sorted(adddata.items())
             Ana.append(dict(adddata))
         print(type(Ana))
-        plt.plot(Ana[0].keys(),Ana[0].values())
-        plt.show()
+        
+        fig, subs = plt.subplots(ncols=labelpos)
 
-            
- 
+        for j in range(labelpos):
+            showGraph(Ana[j], subs[j])
+        fig.show()
 
+def showGraph(lists,plot):
+    plot.plot(lists.keys(),lists.values())
 
 if __name__ == '__main__':
     AnalyzeChangeDistrbution( 'USDJPY', 1, 60, 10 )
