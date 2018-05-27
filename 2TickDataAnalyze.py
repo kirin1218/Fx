@@ -4,7 +4,7 @@ import os
 import TickInfo as ti
 import datetime as dt
 import matplotlib.pyplot as plt
-import mataplotlib.finance as mpf
+import matplotlib.finance as mpf
 
 def AnalyzeChangeDistrbution(pairName, tick, sizeofset, labelpos):
     if Fx.LoadIdxFile(pairName, tick) != False:
@@ -47,10 +47,10 @@ def AnalyzeChangeDistrbution(pairName, tick, sizeofset, labelpos):
             data = ticklist[i].futuredata
             if data is not None and len(data) == 4:
                 if data[0] == 1 and data[1] == 1 and data[2] == 1 and data[3] == 1:
-                    showCandle(ticklist[i])
+                    showCandle(ticklist,i)
 
 
-def showCandle( listdata ):
+def showCandle( lists, idx ):
     fig = plt.figure()
     ax = plt.subplot()
 
