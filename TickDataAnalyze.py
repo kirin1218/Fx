@@ -4,6 +4,7 @@ import os
 import TickInfo as ti
 import datetime as dt
 import matplotlib.pyplot as plt
+import numpy as np
 
 def AnalyzeChangeDistrbution(pairName, tick, sizeofset, labelpos):
     if Fx.LoadIdxFile(pairName, tick) != False:
@@ -43,14 +44,12 @@ def AnalyzeChangeDistrbution(pairName, tick, sizeofset, labelpos):
                     else:
                         adddata[val] = 1
             adddata = sorted(adddata.items())
-            Ana.append(dict(adddata))
+            Ana.append(adddata)
         print(type(Ana))
-        
-        fig, subs = plt.subplots(ncols=labelpos)
-
-        for j in range(labelpos):
-            showGraph(Ana[j], subs[j])
-        fig.show()
+        nary = np.array(Ana[labelpos-1])
+        nary2 = nary.T
+        plt.plot(nary2[0],nary2[1])
+        plt.show()
 
 def showGraph(lists,plot):
     plot.plot(lists.keys(),lists.values())
