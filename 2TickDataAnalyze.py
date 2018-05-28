@@ -4,7 +4,8 @@ import os
 import TickInfo as ti
 import datetime as dt
 import matplotlib.pyplot as plt
-import matplotlib.finance as mpf
+import mpl_finance as mpf
+import numpy as np
 
 def AnalyzeChangeDistrbution(pairName, tick, sizeofset, labelpos):
     if Fx.LoadIdxFile(pairName, tick) != False:
@@ -31,7 +32,7 @@ def AnalyzeChangeDistrbution(pairName, tick, sizeofset, labelpos):
                 tu10 = tu5 = td5 = td10 = 0
                 for j in range(labelpos):
                     hidiff = ticklist[i+sizeofset+j].hi-endtick.en
-                    lodiff = endtick.en - ticklist[i+sizeofset+j].lo
+                    lodiff = -(endtick.en - ticklist[i+sizeofset+j].lo)
                     if hidiff >= 0.1:
                         tu10 = 1
                     elif hidiff > 0.05:
@@ -43,21 +44,40 @@ def AnalyzeChangeDistrbution(pairName, tick, sizeofset, labelpos):
                         td5 = 1
 
                 starttick.setFutureData([tu10,tu5,td5,td10])
+        up10 = up = dn = dn10 =  eq = 0
         for i in range(0,len(ticklist)):
             data = ticklist[i].futuredata
             if data is not None and len(data) == 4:
-                if data[0] == 1 and data[1] == 1 and data[2] == 1 and data[3] == 1:
-                    showCandle(ticklist,i)
+                if data[0] == 1:
+                    up10 += 1
+                elif data[1] == 1:
+                    #showCandle(ticklist,i,labelpos)
+                    up+=1
+                elif data[3] == 1:
+                    dn10+=1
+                elif data[2] == 1:       
+                    #showCandle(ticklist,i,labelpos)
+                    dn+=1
+                else:
+                    eq+=1
+        print( 'up 10tips:{0}:{3} down 10tips:{1}:{4} all:{2}'.format(up, dn, up+dn+eq+up10+dn10, up10, dn10))
 
 
-def showCandle( lists, idx ):
+def showCandle( lists, idx, labelpos ):
     fig = plt.figure()
-    ax = plt.subplot()
+    #ax = plt.subplot(1,1,1)
+    ax = fig.add_subplot(1,1,1)
+    nary = np.zeros((labelpos,4),dtype=float)
 
-    for data in listdata:
-        mpf.candlestick2_ohlc(ax,data.st,data.hi,data.lo,data.en,width=0.7, colorup='g', colordown='r')
+    for i in range(idx,idx+labelpos):
+        data = lists[i]
+        nary[i-idx] = [data.st,data.hi,data.lo,data.en]
+    
+    tary = nary.T
+    mpf.candlestick2_ohlc(ax,opens=tary[0],highs=tary[1],lows=tary[2],closes=tary[3],width=0.7, colorup='g', colordown='r')
+        #mpf.candlestick_ohlc(ax,[op,hi,lo,cl],width=0.7, colorup='g', colordown='r')
     ax.grid()
-    fig.show()
+    plt.show()
 
 if __name__ == '__main__':
     AnalyzeChangeDistrbution( 'USDJPY', 1, 60, 30 )
