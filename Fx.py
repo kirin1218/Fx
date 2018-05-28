@@ -47,6 +47,8 @@ def LoadIdxFile( pairName, tick ):
             print("train_list_size:" + str(train_list_size))
             print("test_list_size:" + str(test_list_size))
             
+            #テストと正解を分ける前にデータを分ける
+            random.shuffle(idxList)
             train_idx_list = idxList[:train_list_size]
             test_idx_list = idxList[train_list_size+1:]
 
@@ -67,7 +69,7 @@ def ParseTickDatLine( line ):
     return d,float(st),float(hi),float(lo),float(en),int(cnt)
 
 
-def LoadDataFile( pairName, tick ):
+def LoadDataFile( pairName, tick, sizeofset, labelpos ):
     global data_list
     print("load dat file")
     counter = 0
@@ -89,12 +91,12 @@ def LoadDataFile( pairName, tick ):
             print( "needidx:"+str(i))
             counter = 0
             start = i
-            end = start + CNT_PER_ONEDATA
-            label = end + NEED_FUTURE_POS 
+            end = start + sizeofset
+            label = end +  labelpos
             with open(path) as f:
                 for line in f:
                     if prev_counter < counter:
-                        if ( start <= counter <= end ) or counter == label:
+                        if ( start <= counter <= end ) or counter <= label:
                             d,st,hi,lo,en,cnt = ParseTickDatLine(line)
                             data_list[counter] = [d,[st,hi,lo,en,cnt]]
                             print("add data_list:"+str(counter))
@@ -120,22 +122,22 @@ def SetIdxCountSize( trainsize, testsize ):
         len(train_idx_list),len(test_idx_list)))
     return False
 
-def GetData( idx ):
+def GetData( idx, sizeofset ):
     global data_list
     prices = []
-    for i in range(idx,idx+CNT_PER_ONEDATA):
+    for i in range(idx,idx+sizeofset):
         data = data_list[i]
         print(data)
         prices.append(data[1])
     return prices
 min_diff = 99999.99
 max_diff = 0.0
-def GetLabel( idx ):
+def GetLabel( idx, sizeofset, labelpos ):
     global data_list
     global min_diff
     global max_diff
-    last_data = data_list[idx+CNT_PER_ONEDATA][1]
-    price = data_list[idx+CNT_PER_ONEDATA+NEED_FUTURE_POS][1]
+    last_data = data_list[idx+sizeofset][1]
+    price = data_list[idx+sizeofset+labelpos][1]
     diff = float(last_data[3])-float(price[3])
     if min_diff > diff:
         min_diff = diff
@@ -251,7 +253,7 @@ class FxDataManager():
 
         if LoadIdxFile("USDJPY", self.tick) != False:
             if SetIdxCountSize( self.train_size, self.test_size ) != False:
-                if LoadDataFile("USDJPY",self.tick) > 0:
+                if LoadDataFile("USDJPY",self.tick,self.sizeofset,self.labelpos) > 0:
                     train_data,train_label = GetNextTrainData( self.train_size )
                     test_data,test_label = GetTestData()
                     fxTrainData = FxDataSet()

@@ -80,5 +80,5 @@ def showCandle( lists, idx, labelpos ):
     plt.show()
 
 if __name__ == '__main__':
-    AnalyzeChangeDistrbution( 'USDJPY', 1, 60, 30 )
+    AnalyzeChangeDistrbution( 'USDJPY', 1, 60, 10 )
 
