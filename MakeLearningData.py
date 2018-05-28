@@ -103,7 +103,7 @@ def MakeData( pairName, cntPerOneData, needFuturePos, tick ):
                 d,st,hi,lo,en,cnt = TickData2List(line)
                 if d != None:
                     if type(st) is str:
-                        print(d,st,hi,lo,en)
+                        #print(d,st,hi,lo,en)
                         priceData.append([d,float(st),float(hi),float(lo),float(en),int(cnt)])
                     else:
                         print(type(st))

@@ -158,12 +158,13 @@ def LoadLastData(pairName,tick,train_size,test_size):
     testl = np.load(testl_path)
     return traind,trainl,testd,testl
 
-def read_data_sets( train_size, test_size, one_hot=False, tick=1, sizeofset=60, labelpos = 30):
-    Mgr = FxDataManager(tick=tick,sizeofset=sizeofset,labelpos=labelpos,train_size=train_size,test_size=test_size,one_hot=one_hot)
+def read_data_sets( pair, train_size, test_size, one_hot=False, tick=1, sizeofset=60, labelpos = 30):
+    Mgr = FxDataManager(pair='USDJPY', tick=tick,sizeofset=sizeofset,labelpos=labelpos,train_size=train_size,test_size=test_size,one_hot=one_hot)
     return Mgr.MakeData()
 
 class FxDataManager():
-    def __init__(self,train_size,test_size,tick=1,labelpos=1,sizeofset=60,one_hot=False):
+    def __init__(self,pair,train_size,test_size,tick=1,labelpos=1,sizeofset=60,one_hot=False):
+        self.pair = pair
         self.tick = tick
         self.labelpos = labelpos
         self.sizeofset = sizeofset
@@ -242,33 +243,104 @@ class FxDataManager():
             retDataList.append(data)
             retLabelList.append(label)
         return retDataList,retLabelList
+    def getTickName(self):
+        if not self.tickName:
+            if self.tick = 1:
+                self.tickName = "1M"
+        return self.tickName
+
+    #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
+    def MakeTrainData(self):
+        path = '.'+os.sep+'Data'+os.sep + pairName + '_' + self.getTickName + ".idx"
+
+        if os.path.exists( path ) == False:
+            mld.MakeData( self.pair, self.sizeofset, self.labelpos, self.tick )
+
+        idxList = []
+        if os.path.exists( path ) != False:
+            with open( path ) as f:
+                lines = f.readlines()
+                for line in lines:
+                    idxList.append(int(line.split("\n")[0]))
+            
+
+            global data_list
+            print("load dat file")
+            counter = 0
+            needList = train_idx_list
+            needList.extend(test_idx_list)
+            needList.sort()
+            print( "needlistsize:"+str(len(needList)))
+
+            tick_name = ''
+            if tick == 1:
+                tick_name = '_1M'
+            path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + ".dat"
+
+            #print(data_list)
+
+            if os.path.exists(path) != False:
+                prev_counter = -1
+                for i in needList:
+                    #print( "needidx:"+str(i))
+                    counter = 0
+                    start = i
+                    end = start + sizeofset
+                    label = end +  labelpos
+                    with open(path) as f:
+                        for line in f:
+                            if prev_counter < counter:
+                                if start <= counter <= label:
+                                    d,st,hi,lo,en,cnt = ParseTickDatLine(line)
+                                    data_list[counter] = [d,[st,hi,lo,en,cnt]]
+                                    #print("add data_list:"+str(counter))
+                                    if counter == label:
+                                        break
+                                    prev_counter = counter
+                            counter = counter+1
+                if len(data_list) > 0:
+                    print("load dat file success")
+                return len(data_list)
+            r
     
+    def LoadTrainData(self):
+        retNAry = None
+        # ./Data/USDJPY_1M_60_30.npy
+        path = '.'+os.sep+'Data'+os.sep + self.pairName + '_' + tick_name /
+        +  '_' str(self.sizeofset) + '_' + str(self.labelpos) + ".npy"
+
+        if os.path.exists( path ) == False:
+            return self.MakeTrainData()
+        return np.load(path)
+        
     def MakeData(self):
-        if ExistLastData("USDJPY", self.tick, self.train_size, self.test_size) != False:
+        if ExistLastData(self.pair, self.tick, self.train_size, self.test_size) != False:
             print('exist last test data,do you use this data?[y/n]')
             ret = input('>> ')
             if ret == 'y' or ret == 'Y':
-                train_data,train_label,test_data,test_label = LoadLastData("USDJPY",self.tick,self.train_size,self.test_size)
+                train_data,train_label,test_data,test_label = LoadLastData(self.pair,self.tick,self.train_size,self.test_size)
                 fxTrainData = FxDataSet(sizeofdata=4,sizeofset=60)
                 fxTrainData.setNP( train_data, train_label )
                 fxTestData = FxDataSet(sizeofdata=4,sizeofset=60)
                 fxTestData.setNP( test_data, test_label )
-                self.fxTFData = FxTFData('USDJPY',self.tick)
+                self.fxTFData = FxTFData(self.pair,self.tick)
                 self.fxTFData.set( fxTrainData, fxTestData)
                 return self.fxTFData
             else:
-                DeleteLastData("USDJPY",self.tick,self.train_size,self.test_size)
+                DeleteLastData(self.pair,self.tick,self.train_size,self.test_size)
 
-        if LoadIdxFile("USDJPY", self.tick) != False:
+        if LoadTrainData() != False:
+
+        if LoadIdxFile(self.pair, self.tick) != False:
             if SetIdxCountSize( self.train_size, self.test_size ) != False:
-                if LoadDataFile("USDJPY",self.tick,self.sizeofset,self.labelpos) > 0:
+                if LoadDataFile(self.pair,self.tick,self.sizeofset,self.labelpos) > 0:
                     train_data,train_label = self.GetNextTrainData( self.train_size )
                     test_data,test_label = self.GetTestData()
                     fxTrainData = FxDataSet()
                     fxTrainData.set( train_data, train_label )
                     fxTestData = FxDataSet()
                     fxTestData.set( test_data, test_label )
-                    self.fxTFData = FxTFData('USDJPY',self.tick)
+                    self.fxTFData = FxTFData(self.pair,self.tick)
                     self.fxTFData.set( fxTrainData, fxTestData)
                     if self.one_hot != False:
                         self.fxTFData.convOneHot()
