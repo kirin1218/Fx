@@ -130,62 +130,39 @@ def GetData( idx, sizeofset ):
         print(data)
         prices.append(data[1])
     return prices
+
 min_diff = 99999.99
 max_diff = 0.0
+
 def GetLabel( idx, sizeofset, labelpos ):
     global data_list
     global min_diff
     global max_diff
     last_data = data_list[idx+sizeofset][1]
-    price = data_list[idx+sizeofset+labelpos][1]
-    diff = float(last_data[3])-float(price[3])
-    if min_diff > diff:
-        min_diff = diff
-    if max_diff < diff:
-        max_diff = diff
-    #~-3|-3~-1|-1~1|1~3|3~|
-    labels = [0 for i in range(3)]
-    label = 2
-    if diff < -0.01:
-        label = 0
-    elif -0.01 <= diff <= 0.01:
-        label = 1
-    elif 0.01 < diff:
-        label = 2
-    labels[label] = 1
+    sidx = idx+sizeofset+1
+    lprice = float(last_data[3])
 
-    return labels
-    
-def GetNextTrainData( size ):
-    global train_idx_list
-    global train_current
-    print( "GetNextTrainData:" + str(size) )
-    retDataList = []
-    retLabelList = []
-    for i in range( train_current, train_current + size ):
-        print("need_idx:"+str(i))
-        need_idx = train_idx_list[i]
-        data = GetData(need_idx)
-        need_idx = train_idx_list[i]
-        label = GetLabel(need_idx)
-        retDataList.append(data)
-        retLabelList.append(label)
-    train_current = train_current + size
-    return retDataList,retLabelList
+    dis_data = [0 for i in range(5)]
+    for i in range(sidx,sidx+labelpos-1):
+        hi = float(data_list[i][1])
+        lo = float(data_list[i][2])
+        hidiff = hi - lprice
+        lodiff = -(lprice-lo)
+        if hidiff >= 0.1:
+            dis_data[0] = 1
+            break
+        elif hidiff >= 0.05:
+            dis_data[1] = 1
+        if lodiff <= -0.1:
+            dis_data[3] = 1
+            break
+        elif lodiff <= -0.05:
+            dis_data[4] = 1
 
-def GetTestData():
-    print( "GetTestData"  )
-    retDataList = []
-    retLabelList = []
-    for i in test_idx_list: 
-        data = GetData(i)
-        label = GetLabel(i)
-        retDataList.append(data)
-        retLabelList.append(label)
-    global min_diff
-    global max_diff
-    return retDataList,retLabelList
+    if dis_data[0] == 0 and dis_data[1] == 0 and dis_data[3] == 0 and dis_data[4] == 0:
+        dis_data[2] = 1
 
+    return dis_data
 def MakeLastDataPath(pairName,tick,size):
     tick_name = ''
     if tick == 1:
@@ -234,6 +211,38 @@ class FxDataManager():
         self.test_size = test_size
         self.one_hot = one_hot
         self.fxTFData = None
+    
+    def GetNextTrainData( size ):
+        global train_idx_list
+        global train_current
+        print( "GetNextTrainData:" + str(size) )
+        retDataList = []
+        retLabelList = []
+        for i in range( train_current, train_current + size ):
+            print("need_dx:"+str(i))
+            need_idx = train_idx_list[i]
+            data = GetData(need_idx)
+            need_idx = train_idx_list[i]
+            label = GetLabel(need_idx)
+            print('idx:{0}'.format(need_idx), label)
+            retDataList.append(data)
+            retLabelList.append(label)
+        train_current = train_current + size
+        return retDataList,retLabelList
+
+    def GetTestData():
+        print( "GetTestData"  )
+        retDataList = []
+        retLabelList = []
+        for i in test_idx_list: 
+            data = GetData(i)
+            label = GetLabel(i)
+            retDataList.append(data)
+            retLabelList.append(label)
+        global min_diff
+        global max_diff
+        return retDataList,retLabelList
+
 
     def MakeData(self):
         if ExistLastData("USDJPY", self.tick, self.train_size, self.test_size) != False:
