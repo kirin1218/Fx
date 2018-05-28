@@ -11,7 +11,7 @@ import numpy as np
 TRAIN_SIZE = 100
 TEST_SIZE = 30
 CNT_PER_ONEDATA = 60
-NEED_FUTURE_POS = 10
+NEED_FUTURE_POS = 30
 train_current = 0
 train_idx_list = []
 test_idx_list = []
@@ -83,12 +83,12 @@ def LoadDataFile( pairName, tick, sizeofset, labelpos ):
         tick_name = '_1M'
     path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + ".dat"
 
-    print(data_list)
+    #print(data_list)
 
     if os.path.exists(path) != False:
         prev_counter = -1
         for i in needList:
-            print( "needidx:"+str(i))
+            #print( "needidx:"+str(i))
             counter = 0
             start = i
             end = start + sizeofset
@@ -96,10 +96,10 @@ def LoadDataFile( pairName, tick, sizeofset, labelpos ):
             with open(path) as f:
                 for line in f:
                     if prev_counter < counter:
-                        if ( start <= counter <= end ) or counter <= label:
+                        if start <= counter <= label:
                             d,st,hi,lo,en,cnt = ParseTickDatLine(line)
                             data_list[counter] = [d,[st,hi,lo,en,cnt]]
-                            print("add data_list:"+str(counter))
+                            #print("add data_list:"+str(counter))
                             if counter == label:
                                 break
                             prev_counter = counter
@@ -122,47 +122,7 @@ def SetIdxCountSize( trainsize, testsize ):
         len(train_idx_list),len(test_idx_list)))
     return False
 
-def GetData( idx, sizeofset ):
-    global data_list
-    prices = []
-    for i in range(idx,idx+sizeofset):
-        data = data_list[i]
-        print(data)
-        prices.append(data[1])
-    return prices
 
-min_diff = 99999.99
-max_diff = 0.0
-
-def GetLabel( idx, sizeofset, labelpos ):
-    global data_list
-    global min_diff
-    global max_diff
-    last_data = data_list[idx+sizeofset][1]
-    sidx = idx+sizeofset+1
-    lprice = float(last_data[3])
-
-    dis_data = [0 for i in range(5)]
-    for i in range(sidx,sidx+labelpos-1):
-        hi = float(data_list[i][1])
-        lo = float(data_list[i][2])
-        hidiff = hi - lprice
-        lodiff = -(lprice-lo)
-        if hidiff >= 0.1:
-            dis_data[0] = 1
-            break
-        elif hidiff >= 0.05:
-            dis_data[1] = 1
-        if lodiff <= -0.1:
-            dis_data[3] = 1
-            break
-        elif lodiff <= -0.05:
-            dis_data[4] = 1
-
-    if dis_data[0] == 0 and dis_data[1] == 0 and dis_data[3] == 0 and dis_data[4] == 0:
-        dis_data[2] = 1
-
-    return dis_data
 def MakeLastDataPath(pairName,tick,size):
     tick_name = ''
     if tick == 1:
@@ -198,7 +158,7 @@ def LoadLastData(pairName,tick,train_size,test_size):
     testl = np.load(testl_path)
     return traind,trainl,testd,testl
 
-def read_data_sets( train_size, test_size, one_hot=False, tick=1, sizeofset=60, labelpos = 1):
+def read_data_sets( train_size, test_size, one_hot=False, tick=1, sizeofset=60, labelpos = 30):
     Mgr = FxDataManager(tick=tick,sizeofset=sizeofset,labelpos=labelpos,train_size=train_size,test_size=test_size,one_hot=one_hot)
     return Mgr.MakeData()
 
@@ -212,38 +172,77 @@ class FxDataManager():
         self.one_hot = one_hot
         self.fxTFData = None
     
-    def GetNextTrainData( size ):
+    def GetData( self, idx ):
+        global data_list
+        prices = []
+        for i in range(idx,idx+self.sizeofset):
+            data = data_list[i]
+            #print(data)
+            prices.append(data[1])
+        return prices
+
+    def GetLabel( self, idx ):
+        global data_list
+        last_data = data_list[idx+self.sizeofset][1]
+        sidx = idx+self.sizeofset+1
+        lprice = float(last_data[3])
+
+        dis_data = [0 for i in range(5)]
+        for i in range(sidx,sidx+self.labelpos):
+            data = data_list[i][1]
+            hi = float(data[1])
+            lo = float(data[2])
+            hidiff = hi - lprice
+            lodiff = -(lprice-lo)
+            if hidiff >= 0.1:
+                dis_data[0] = 1
+                dis_data[1] = 0
+                dis_data[3] = 0
+                break
+            elif hidiff >= 0.05:
+                dis_data[1] = 1
+            if lodiff <= -0.1:
+                dis_data[4] = 1
+                dis_data[1] = 0
+                dis_data[3] = 0
+                break
+            elif lodiff <= -0.05:
+                dis_data[3] = 1
+
+        if dis_data[0] == 0 and dis_data[1] == 0 and dis_data[3] == 0 and dis_data[4] == 0:
+            dis_data[2] = 1
+
+        return dis_data
+
+    def GetNextTrainData( self, size ):
         global train_idx_list
         global train_current
         print( "GetNextTrainData:" + str(size) )
         retDataList = []
         retLabelList = []
         for i in range( train_current, train_current + size ):
-            print("need_dx:"+str(i))
+            #print("need_dx:"+str(i))
             need_idx = train_idx_list[i]
-            data = GetData(need_idx)
+            data = self.GetData(need_idx)
             need_idx = train_idx_list[i]
-            label = GetLabel(need_idx)
-            print('idx:{0}'.format(need_idx), label)
+            label = self.GetLabel(need_idx)
+            #print('idx:{0}'.format(need_idx), label)
             retDataList.append(data)
             retLabelList.append(label)
         train_current = train_current + size
         return retDataList,retLabelList
 
-    def GetTestData():
+    def GetTestData(self):
         print( "GetTestData"  )
         retDataList = []
         retLabelList = []
         for i in test_idx_list: 
-            data = GetData(i)
-            label = GetLabel(i)
+            data = self.GetData(i)
+            label = self.GetLabel(i)
             retDataList.append(data)
             retLabelList.append(label)
-        global min_diff
-        global max_diff
         return retDataList,retLabelList
-
-
+    
     def MakeData(self):
         if ExistLastData("USDJPY", self.tick, self.train_size, self.test_size) != False:
             print('exist last test data,do you use this data?[y/n]')
@@ -263,8 +262,8 @@ class FxDataManager():
         if LoadIdxFile("USDJPY", self.tick) != False:
             if SetIdxCountSize( self.train_size, self.test_size ) != False:
                 if LoadDataFile("USDJPY",self.tick,self.sizeofset,self.labelpos) > 0:
-                    train_data,train_label = GetNextTrainData( self.train_size )
-                    test_data,test_label = GetTestData()
+                    train_data,train_label = self.GetNextTrainData( self.train_size )
+                    test_data,test_label = self.GetTestData()
                     fxTrainData = FxDataSet()
                     fxTrainData.set( train_data, train_label )
                     fxTestData = FxDataSet()
@@ -312,9 +311,9 @@ class FxDataSet():
 
     def convOneHot( self ):
         self.datas = self.datas.ravel().reshape((-1,self.sizeofset*self.sizeofdata))
-        print('convert one hot', self.datas.shape)
+        ##print('convert one hot', self.datas.shape)
         self.labels = self.labels.ravel().reshape((self.sizeofbat,-1))
-        print('convert one hot', self.labels.shape)
+        #print('convert one hot', self.labels.shape)
         self.isonehot = True
     
     def print(self):
