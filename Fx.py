@@ -251,7 +251,7 @@ class FxDataManager():
 
     #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
     def MakeTrainData(self):
-        path = '.'+os.sep+'Data'+os.sep + pairName + '_' + self.getTickName + ".idx"
+        path = '.'+os.sep+'Data'+os.sep + pairName + '_' + self.getTickName() + ".idx"
 
         if os.path.exists( path ) == False:
             mld.MakeData( self.pair, self.sizeofset, self.labelpos, self.tick )
@@ -265,40 +265,64 @@ class FxDataManager():
             
 
             global data_list
-            print("load dat file")
             counter = 0
-            needList = train_idx_list
-            needList.extend(test_idx_list)
-            needList.sort()
-            print( "needlistsize:"+str(len(needList)))
 
-            tick_name = ''
-            if tick == 1:
-                tick_name = '_1M'
-            path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + ".dat"
+            datpath = '.'+os.sep+'Data'+os.sep + pairName + '_' + self.getTickName() + ".dat"
 
-            #print(data_list)
+            if os.path.exists(datpath) != False:
+                alldatList = []
+                #一度全部のデータを読み込む
+                with open(datpath) as f:
+                    for line in f:
+                        d,st,hi,lo,en,cnt = ParseTickDatLine(line)
+                        alldatList.append([st,hi,lo,en,cnt])
 
-            if os.path.exists(path) != False:
-                prev_counter = -1
-                for i in needList:
-                    #print( "needidx:"+str(i))
-                    counter = 0
+                #データ数,セット数(60),要素数(op,hi,lo,cl,cnt)のnumpy配列を作成
+                train_list = np.array([-1,self.sizeofset,5])
+                #データ数,ラベル情報(10up,5up,even,5down,10down)のnumpy配列を作成
+                label_list = np.array([-1,5])
+
+                for i in idxList:
                     start = i
                     end = start + sizeofset
                     label = end +  labelpos
-                    with open(path) as f:
-                        for line in f:
-                            if prev_counter < counter:
-                                if start <= counter <= label:
-                                    d,st,hi,lo,en,cnt = ParseTickDatLine(line)
-                                    data_list[counter] = [d,[st,hi,lo,en,cnt]]
-                                    #print("add data_list:"+str(counter))
-                                    if counter == label:
-                                        break
-                                    prev_counter = counter
-                            counter = counter+1
-                if len(data_list) > 0:
+                    trainData = []
+                    #訓練データの作成
+                    if j in range(start,end):
+                        trainData.append(alldatList[j])
+                train_list = np.array(trainData)
+
+                for i in idxList:
+                    #正解データの作成
+                    label_data = [0 for i in range(5)]
+                    #訓練データの最後のClose値
+                    lprice = alldatList[end-1][3]
+                    for j in range(end,label):
+                        data = alldatList[j]
+                        hi = float(data[1])
+                        lo = float(data[2])
+                        hidiff = hi - lprice
+                        lodiff = -(lprice-lo)
+                        if hidiff >= 0.1:
+                            label_data[0] = 1
+                            label_data[1] = 0
+                            label_data[3] = 0
+                            break
+                        elif hidiff >= 0.05:
+                            label_data[1] = 1
+                        if lodiff <= -0.1:
+                            label_data[4] = 1
+                            label_data[1] = 0
+                            label_data[3] = 0
+                            break
+                        elif lodiff <= -0.05:
+                            label_data[3] = 1
+
+                    if label_data[0] == 0 and label_data[1] == 0 and label_data[3] == 0 and label_data[4] == 0:
+                        label_data[2] = 1
+
+
+    if len(data_list) > 0:
                     print("load dat file success")
                 return len(data_list)
             r
