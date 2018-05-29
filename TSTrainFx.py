@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 #from tensorflow.examples.tutorials.mnist import input_data
-import tensorflow as tf
+#import tensorflow as tf
 import Fx
 import numpy as np
 
@@ -12,8 +12,8 @@ num_result = 5
 
 #mnistデータを格納しimpoたオブジェクトを呼び出す
 #mnist = input_data.read_data_sets("data/", one_hot=True)
-fxDS = Fx.read_data_sets(train_size=200000,test_size=5000,one_hot=True)
-
+fxDS = Fx.read_data_sets('USDJPY', train_size=200000,test_size=5000,one_hot=True)
+'''
 """モデル構築開始"""
 with tf.name_scope("input") as scope: 
     x = tf.placeholder(tf.float32, [None, num_seq*num_input])
@@ -79,3 +79,4 @@ with tf.Session() as sess:
         if step % 100 == 0:
             acc_val = sess.run( accuracy, feed_dict={x:test_datas, y:test_labels})
             print('Step %d: accuracy = %.2f' % (step, acc_val))
+'''

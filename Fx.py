@@ -172,6 +172,7 @@ class FxDataManager():
         self.test_size = test_size
         self.one_hot = one_hot
         self.fxTFData = None
+        self.tickName = ''
     
     def GetData( self, idx ):
         global data_list
@@ -243,31 +244,37 @@ class FxDataManager():
             retDataList.append(data)
             retLabelList.append(label)
         return retDataList,retLabelList
+
     def getTickName(self):
         if not self.tickName:
-            if self.tick = 1:
+            if self.tick == 1:
                 self.tickName = "1M"
         return self.tickName
+    
+    def MakeTrainCachePath(self):
+        # ./Data/USDJPY_data_1M_60_30.npy
+        trainpath = '.'+os.sep+'Data'+os.sep + self.pair + '_data_' + self.getTickName() \
+        +  '_' + str(self.sizeofset) + '_' + str(self.labelpos) + ".npy"
+        # ./Data/USDJPY_label_1M_60_30.npy
+        labelpath = '.'+os.sep+'Data'+os.sep + self.pair + '_label_' + self.getTickName() \
+        +  '_' + str(self.sizeofset) + '_' + str(self.labelpos) + ".npy"
+
+        return trainpath, labelpath
 
     #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
     def MakeTrainData(self):
-        path = '.'+os.sep+'Data'+os.sep + pairName + '_' + self.getTickName() + ".idx"
-
-        if os.path.exists( path ) == False:
+        idxpath = '.'+os.sep+'Data'+os.sep + self.pair + self.getTickName() + ".idx"
+        if os.path.exists( idxpath ) == False: 
             mld.MakeData( self.pair, self.sizeofset, self.labelpos, self.tick )
 
         idxList = []
-        if os.path.exists( path ) != False:
-            with open( path ) as f:
+        if os.path.exists( idxpath ) != False:
+            with open( idxpath ) as f:
                 lines = f.readlines()
                 for line in lines:
                     idxList.append(int(line.split("\n")[0]))
             
-
-            global data_list
-            counter = 0
-
-            datpath = '.'+os.sep+'Data'+os.sep + pairName + '_' + self.getTickName() + ".dat"
+            datpath = '.'+os.sep+'Data'+os.sep + self.pair + '_' + self.getTickName() + ".dat"
 
             if os.path.exists(datpath) != False:
                 alldatList = []
@@ -278,27 +285,31 @@ class FxDataManager():
                         alldatList.append([st,hi,lo,en,cnt])
 
                 #データ数,セット数(60),要素数(op,hi,lo,cl,cnt)のnumpy配列を作成
-                train_list = np.array([-1,self.sizeofset,5])
+                train_list = np.array([])
                 #データ数,ラベル情報(10up,5up,even,5down,10down)のnumpy配列を作成
-                label_list = np.array([-1,5])
+                label_list = np.array([])
 
                 for i in idxList:
                     start = i
-                    end = start + sizeofset
-                    label = end +  labelpos
-                    trainData = []
+                    end = start + self.sizeofset
+                    label = end +  self.labelpos
                     #訓練データの作成
-                    if j in range(start,end):
-                        trainData.append(alldatList[j])
-                train_list = np.array(trainData)
+                    for j in range(start,end):
+                        train_list = np.append(train_list,alldatList[j])
+                train_list = train_list.reshape(-1, self.sizeofset, 5 )
+                print(train_list.shape)
 
                 for i in idxList:
+                    start = i
+                    end = start + self.sizeofset
+                    label = end +  self.labelpos
+
                     #正解データの作成
-                    label_data = [0 for i in range(5)]
+                    label_data = [0 for j in range(5)]
                     #訓練データの最後のClose値
                     lprice = alldatList[end-1][3]
                     for j in range(end,label):
-                        data = alldatList[j]
+                        data = alldatList[i]
                         hi = float(data[1])
                         lo = float(data[2])
                         hidiff = hi - lprice
@@ -320,22 +331,21 @@ class FxDataManager():
 
                     if label_data[0] == 0 and label_data[1] == 0 and label_data[3] == 0 and label_data[4] == 0:
                         label_data[2] = 1
+                    label_list = np.append(label_list,label_data)
+                label_list = label_list.reshape(-1,5)
+            
+            datacache, labelcache = self.MakeTrainCachePath()
+            np.save( datacache, train_list ) 
+            np.save( data_path, label_list ) 
+        return train_list,label_list
 
-
-    if len(data_list) > 0:
-                    print("load dat file success")
-                return len(data_list)
-            r
-    
     def LoadTrainData(self):
-        retNAry = None
-        # ./Data/USDJPY_1M_60_30.npy
-        path = '.'+os.sep+'Data'+os.sep + self.pairName + '_' + tick_name /
-        +  '_' str(self.sizeofset) + '_' + str(self.labelpos) + ".npy"
-
-        if os.path.exists( path ) == False:
-            return self.MakeTrainData()
-        return np.load(path)
+        datacache, labelcache = self.MakeTrainCachePath()
+        if os.path.exists( datacache ) == False or os.path.exists( labelcache ) == False:
+           return self.MakeTrainData()
+        data = np.load(datacache)
+        label = np.load(labelcache)
+        return data,label
         
     def MakeData(self):
         if ExistLastData(self.pair, self.tick, self.train_size, self.test_size) != False:
@@ -353,24 +363,20 @@ class FxDataManager():
             else:
                 DeleteLastData(self.pair,self.tick,self.train_size,self.test_size)
 
-        if LoadTrainData() != False:
-
-        if LoadIdxFile(self.pair, self.tick) != False:
-            if SetIdxCountSize( self.train_size, self.test_size ) != False:
-                if LoadDataFile(self.pair,self.tick,self.sizeofset,self.labelpos) > 0:
-                    train_data,train_label = self.GetNextTrainData( self.train_size )
-                    test_data,test_label = self.GetTestData()
-                    fxTrainData = FxDataSet()
-                    fxTrainData.set( train_data, train_label )
-                    fxTestData = FxDataSet()
-                    fxTestData.set( test_data, test_label )
-                    self.fxTFData = FxTFData(self.pair,self.tick)
-                    self.fxTFData.set( fxTrainData, fxTestData)
-                    if self.one_hot != False:
-                        self.fxTFData.convOneHot()
-                    #self.fxTFData.convNormalize()
-                    self.fxTFData.save()
-                    return self.fxTFData
+        if self.LoadTrainData() != False:
+            train_data,train_label = self.GetNextTrainData( self.train_size )
+            test_data,test_label = self.GetTestData()
+            fxTrainData = FxDataSet()
+            fxTrainData.set( train_data, train_label )
+            fxTestData = FxDataSet()
+            fxTestData.set( test_data, test_label )
+            self.fxTFData = FxTFData(self.pair,self.tick)
+            self.fxTFData.set( fxTrainData, fxTestData)
+            if self.one_hot != False:
+                self.fxTFData.convOneHot()
+                #self.fxTFData.convNormalize()
+                self.fxTFData.save()
+                return self.fxTFData
         return None
 
     
