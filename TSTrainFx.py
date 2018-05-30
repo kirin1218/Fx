@@ -12,7 +12,7 @@ num_result = 5
 
 #mnistデータを格納しimpoたオブジェクトを呼び出す
 #mnist = input_data.read_data_sets("data/", one_hot=True)
-fxDS = Fx.read_data_sets('USDJPY', train_size=200000,test_size=5000,one_hot=True)
+fxDS = Fx.read_data_sets('USDJPY', train_size=200,test_size=50,one_hot=True)
 '''
 """モデル構築開始"""
 with tf.name_scope("input") as scope: 

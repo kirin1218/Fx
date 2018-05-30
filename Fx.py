@@ -159,7 +159,7 @@ def LoadLastData(pairName,tick,train_size,test_size):
     return traind,trainl,testd,testl
 
 def read_data_sets( pair, train_size, test_size, one_hot=False, tick=1, sizeofset=60, labelpos = 30):
-    Mgr = FxDataManager(pair='USDJPY', tick=tick,sizeofset=sizeofset,labelpos=labelpos,train_size=train_size,test_size=test_size,one_hot=one_hot)
+    Mgr = FxDataManager(pair=pair, tick=tick,sizeofset=sizeofset,labelpos=labelpos,train_size=train_size,test_size=test_size,one_hot=one_hot)
     return Mgr.MakeData()
 
 class FxDataManager():
@@ -173,6 +173,8 @@ class FxDataManager():
         self.one_hot = one_hot
         self.fxTFData = None
         self.tickName = ''
+        self.alltrainlist = None
+        self.alllablelist = None
     
     def GetData( self, idx ):
         global data_list
@@ -263,7 +265,7 @@ class FxDataManager():
 
     #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
     def MakeTrainData(self):
-        idxpath = '.'+os.sep+'Data'+os.sep + self.pair + self.getTickName() + ".idx"
+        idxpath = '.'+os.sep+'Data'+os.sep + self.pair + '_' + self.getTickName() + ".idx"
         if os.path.exists( idxpath ) == False: 
             mld.MakeData( self.pair, self.sizeofset, self.labelpos, self.tick )
 
@@ -333,11 +335,18 @@ class FxDataManager():
                         label_data[2] = 1
                     label_list = np.append(label_list,label_data)
                 label_list = label_list.reshape(-1,5)
+                print(label_list.shape)
             
             datacache, labelcache = self.MakeTrainCachePath()
             np.save( datacache, train_list ) 
-            np.save( data_path, label_list ) 
-        return train_list,label_list
+            np.save( labelcache, label_list ) 
+        batsize = train_list.shape[0]
+        batsize2 = label_list.shape[0]
+
+        if batsize > 0 and batsize == batsize2:
+            return train_list,label_list
+        else:
+            return None, None
 
     def LoadTrainData(self):
         datacache, labelcache = self.MakeTrainCachePath()
@@ -346,6 +355,18 @@ class FxDataManager():
         data = np.load(datacache)
         label = np.load(labelcache)
         return data,label
+    
+    def GetLabelDistribution(self):
+        labelary = np.sum(self.alllablelist,axis=0)
+        return labelary
+
+    def ExtractDataByMinsize(self,size):
+        datalistbylabel = {}
+        labellistbylabel = {}
+
+        for i in range(0,self.alllablelist.shape[0]):
+            label = self.alllablelist[i]
+            for j in 
         
     def MakeData(self):
         if ExistLastData(self.pair, self.tick, self.train_size, self.test_size) != False:
@@ -363,7 +384,18 @@ class FxDataManager():
             else:
                 DeleteLastData(self.pair,self.tick,self.train_size,self.test_size)
 
-        if self.LoadTrainData() != False:
+        self.alltrainlist, self.alllablelist = self.LoadTrainData() 
+        if self.alltrainlist is not None and self.alllablelist is not None:
+            #バッチサイズ
+            max_size = self.alltrainlist.shape[0]
+            if self.train_size + self.test_size > max_size:
+                return None
+            #正解データの個数を取得
+            labelDist = self.GetLabelDistribution()
+            minElement = np.min(labelDist)
+            self.ExtractDataByMinsize(minElement)
+            trainsizerate = self.train_size / (self.train_size+self.test_size)
+
             train_data,train_label = self.GetNextTrainData( self.train_size )
             test_data,test_label = self.GetTestData()
             fxTrainData = FxDataSet()
