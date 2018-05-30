@@ -366,7 +366,17 @@ class FxDataManager():
 
         for i in range(0,self.alllablelist.shape[0]):
             label = self.alllablelist[i]
-            for j in 
+            idxary = np.where(label==1)
+            idx = idxary[0][0]
+            if not (idx in datalistbylabel.keys()):
+                datalistbylabel[idx] = []
+                labellistbylabel[idx] = []
+
+            #if len(datalistbylabel[idx]) < size:
+            datalistbylabel[idx].append(self.alltrainlist[idx])
+            labellistbylabel[idx].append(label)
+            #print(label,idx)
+            randomidx = random.sample(range(len(datalistbylabel[0])),size)
         
     def MakeData(self):
         if ExistLastData(self.pair, self.tick, self.train_size, self.test_size) != False:
