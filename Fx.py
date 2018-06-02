@@ -174,7 +174,7 @@ class FxDataManager():
         self.fxTFData = None
         self.tickName = ''
         self.alltrainlist = None
-        self.alllablelist = None
+        self.alllabellist = None
     
     def GetData( self, idx ):
         global data_list
@@ -356,16 +356,16 @@ class FxDataManager():
         label = np.load(labelcache)
         return data,label
     
-    def GetLabelDistribution(self):
-        labelary = np.sum(self.alllablelist,axis=0)
+    def GetLabelDistribution(self,lists):
+        labelary = np.sum(lists,axis=0)
         return labelary
 
     def ExtractDataByMinsize(self,size):
         datalistbylabel = {}
         labellistbylabel = {}
 
-        for i in range(0,self.alllablelist.shape[0]):
-            label = self.alllablelist[i]
+        for i in range(0,self.alllabellist.shape[0]):
+            label = self.alllabellist[i]
             idxary = np.where(label==1)
             idx = idxary[0][0]
             if not (idx in datalistbylabel.keys()):
@@ -375,8 +375,14 @@ class FxDataManager():
             #if len(datalistbylabel[idx]) < size:
             datalistbylabel[idx].append(self.alltrainlist[idx])
             labellistbylabel[idx].append(label)
+        
+        for i in range(self.alllabellist.shape[1]):
+            npdata = np.array(datalistbylabel[i])
+            nplabel = np.array(labellistbylabel[i])
+
             #print(label,idx)
-            randomidx = random.sample(range(len(datalistbylabel[0])),size)
+            randomidx = random.sample(range(len(datalistbylabel[0])),int(size))
+            print(randomidx)
         
     def MakeData(self):
         if ExistLastData(self.pair, self.tick, self.train_size, self.test_size) != False:
@@ -394,14 +400,21 @@ class FxDataManager():
             else:
                 DeleteLastData(self.pair,self.tick,self.train_size,self.test_size)
 
-        self.alltrainlist, self.alllablelist = self.LoadTrainData() 
-        if self.alltrainlist is not None and self.alllablelist is not None:
+        self.alltrainlist, self.alllabellist = self.LoadTrainData() 
+        if self.alltrainlist is not None and self.alllabellist is not None:
             #バッチサイズ
             max_size = self.alltrainlist.shape[0]
+            label_size = int(max_size*0.8)
+            #正解用のデータを分布をきにせずに取り出す
+            test_data_area = self.alltrainlist[label_size:]
+            test_label_area = self.alllabellist[label_size:]
+            train_data_area = self.alltrainlist[:label_size]
+            train_label_area = self.alllabellist[:label_size]
+
             if self.train_size + self.test_size > max_size:
                 return None
             #正解データの個数を取得
-            labelDist = self.GetLabelDistribution()
+            labelDist = self.GetLabelDistribution(train_label_area)
             minElement = np.min(labelDist)
             self.ExtractDataByMinsize(minElement)
             trainsizerate = self.train_size / (self.train_size+self.test_size)
