@@ -191,31 +191,22 @@ class FxDataManager():
         sidx = idx+self.sizeofset+1
         lprice = float(last_data[3])
 
-        dis_data = [0 for i in range(5)]
+        dis_data = [0 for i in range(3)]
         for i in range(sidx,sidx+self.labelpos):
             data = data_list[i][1]
             hi = float(data[1])
             lo = float(data[2])
             hidiff = hi - lprice
             lodiff = -(lprice-lo)
-            if hidiff >= 0.1:
+            if hidiff >= 0.05:
                 dis_data[0] = 1
-                dis_data[1] = 0
-                dis_data[3] = 0
                 break
-            elif hidiff >= 0.05:
-                dis_data[1] = 1
-            if lodiff <= -0.1:
-                dis_data[4] = 1
-                dis_data[1] = 0
-                dis_data[3] = 0
+            if lodiff <= -0.05:
+                dis_data[2] = 1
                 break
-            elif lodiff <= -0.05:
-                dis_data[3] = 1
 
-        if dis_data[0] == 0 and dis_data[1] == 0 and dis_data[3] == 0 and dis_data[4] == 0:
-            dis_data[2] = 1
-
+        if dis_data[0] == 0 and dis_data[2] == 0:
+            dis_data[1] = 1
         return dis_data
 
     def GetNextTrainData( self, size ):
@@ -286,28 +277,37 @@ class FxDataManager():
                         d,st,hi,lo,en,cnt = ParseTickDatLine(line)
                         alldatList.append([st,hi,lo,en,cnt])
 
+                cnt1 = 0
+                allcount = len(idxList)
                 #データ数,セット数(60),要素数(op,hi,lo,cl,cnt)のnumpy配列を作成
-                train_list = np.array([])
+                train_list = np.zeros(([allcount,self.sizeofset,5]),dtype=float)
                 #データ数,ラベル情報(10up,5up,even,5down,10down)のnumpy配列を作成
-                label_list = np.array([])
+                label_list = np.zeros(([allcount,3]),dtype=float)
 
                 for i in idxList:
                     start = i
                     end = start + self.sizeofset
                     label = end +  self.labelpos
+                    cnt2 = 0
                     #訓練データの作成
                     for j in range(start,end):
-                        train_list = np.append(train_list,alldatList[j])
-                train_list = train_list.reshape(-1, self.sizeofset, 5 )
+                        train_list[cnt1][cnt2] = alldatList[j]
+                        cnt2+=1
+                    if cnt1%100 == 0:
+                        print('MakeTrainData(data):',cnt1,'/',allcount)
+
+                    cnt1+=1
+                #train_list = train_list.reshape(-1, self.sizeofset, 5 )
                 print(train_list.shape)
 
+                cnt1 = 0
                 for i in idxList:
                     start = i
                     end = start + self.sizeofset
                     label = end +  self.labelpos
 
                     #正解データの作成
-                    label_data = [0 for j in range(5)]
+                    label_data = [0 for j in range(3)]
                     #訓練データの最後のClose値
                     lprice = alldatList[end-1][3]
                     for j in range(end,label):
@@ -318,28 +318,23 @@ class FxDataManager():
                         lodiff = -(lprice-lo)
                         if hidiff >= 0.1:
                             label_data[0] = 1
-                            label_data[1] = 0
-                            label_data[3] = 0
                             break
-                        elif hidiff >= 0.05:
-                            label_data[1] = 1
                         if lodiff <= -0.1:
-                            label_data[4] = 1
-                            label_data[1] = 0
-                            label_data[3] = 0
+                            label_data[2] = 1
                             break
-                        elif lodiff <= -0.05:
-                            label_data[3] = 1
 
-                    if label_data[0] == 0 and label_data[1] == 0 and label_data[3] == 0 and label_data[4] == 0:
-                        label_data[2] = 1
-                    label_list = np.append(label_list,label_data)
-                label_list = label_list.reshape(-1,5)
+                    if label_data[0] == 0 and label_data[2] == 0:
+                        label_data[1] = 1
+
+                    label_list[cnt1] = label_data
+                    if cnt1%100 == 0:
+                        print('MakeTrainData(label):',cnt1,'/',allcount)
+                    cnt1+=1
                 print(label_list.shape)
             
             datacache, labelcache = self.MakeTrainCachePath()
-            np.save( datacache, train_list ) 
-            np.save( labelcache, label_list ) 
+            #np.save( datacache, train_list ) 
+            #np.save( labelcache, label_list ) 
         batsize = train_list.shape[0]
         batsize2 = label_list.shape[0]
 
@@ -360,12 +355,12 @@ class FxDataManager():
         labelary = np.sum(lists,axis=0)
         return labelary
 
-    def ExtractDataByMinsize(self,size):
+    def ExtractDataByMinsize(self,dataary,labelary,minsize):
         datalistbylabel = {}
         labellistbylabel = {}
 
-        for i in range(0,self.alllabellist.shape[0]):
-            label = self.alllabellist[i]
+        for i in range(0,labelary.shape[0]):
+            label = labelary[i]
             idxary = np.where(label==1)
             idx = idxary[0][0]
             if not (idx in datalistbylabel.keys()):
@@ -373,17 +368,29 @@ class FxDataManager():
                 labellistbylabel[idx] = []
 
             #if len(datalistbylabel[idx]) < size:
-            datalistbylabel[idx].append(self.alltrainlist[idx])
+            datalistbylabel[idx].append(dataary[idx])
             labellistbylabel[idx].append(label)
-        
-        for i in range(self.alllabellist.shape[1]):
+        retdata = []
+        retlabel = [] 
+        for i in range(labelary.shape[1]):
             npdata = np.array(datalistbylabel[i])
             nplabel = np.array(labellistbylabel[i])
 
             #print(label,idx)
-            randomidx = random.sample(range(len(datalistbylabel[0])),int(size))
-            print(randomidx)
+            randomidx = random.sample(range(len(datalistbylabel[i])),int(minsize))
+            tempdata = npdata[randomidx]
+            templabel = nplabel[randomidx]
+            retdata.extend(tempdata)
+            retlabel.extend(templabel)
         
+        randomidx = random.sample(range(len(retlabel)),len(retlabel))
+        npdata = np.array(retdata)
+        nplabel = np.array(retlabel)
+        retdata = npdata[randomidx]
+        retlabel = nplabel[randomidx]
+        
+        return retdata,retlabel
+
     def MakeData(self):
         if ExistLastData(self.pair, self.tick, self.train_size, self.test_size) != False:
             print('exist last test data,do you use this data?[y/n]')
@@ -404,6 +411,7 @@ class FxDataManager():
         if self.alltrainlist is not None and self.alllabellist is not None:
             #バッチサイズ
             max_size = self.alltrainlist.shape[0]
+            print('max_size:',max_size)
             label_size = int(max_size*0.8)
             #正解用のデータを分布をきにせずに取り出す
             test_data_area = self.alltrainlist[label_size:]
@@ -411,16 +419,17 @@ class FxDataManager():
             train_data_area = self.alltrainlist[:label_size]
             train_label_area = self.alllabellist[:label_size]
 
-            if self.train_size + self.test_size > max_size:
-                return None
+            #テストデータを作成
+            randomidx = random.sample(range(len(test_data_area)),self.test_size)
+            test_data_cond = np.array(test_data_area) 
+            test_label_cond = np.array(test_label_area) 
+            test_data = test_data_cond[randomidx] 
+            test_label = test_label_cond[randomidx] 
             #正解データの個数を取得
             labelDist = self.GetLabelDistribution(train_label_area)
             minElement = np.min(labelDist)
-            self.ExtractDataByMinsize(minElement)
-            trainsizerate = self.train_size / (self.train_size+self.test_size)
+            train_data,train_label = self.ExtractDataByMinsize(train_data_area,train_label_area,minElement)
 
-            train_data,train_label = self.GetNextTrainData( self.train_size )
-            test_data,test_label = self.GetTestData()
             fxTrainData = FxDataSet()
             fxTrainData.set( train_data, train_label )
             fxTestData = FxDataSet()
@@ -487,6 +496,9 @@ class FxDataSet():
         self.cur_pos += size
         return retdatas, retlabel
     
+    def pos_reset(self):
+        self.cur_pos = 0
+        
     def save(self,pair,tick,size):
         data_path,label_path = MakeLastDataPath(pair,tick,size)
         np.save( data_path, self.datas)
@@ -519,11 +531,15 @@ class FxTFData():
         self.train.save(self.pair,self.tick,self.train_size)
         self.test.save(self.pair,self.tick,self.test_size)
     
+    
 if __name__ == '__main__':
-    train_data = [[[1.2,2.3],[3.4,5.6]],[[1.2,2.3],[3.4,5.6]]]
-    train_label = [[0,1,0],[1,0,0]]
-    fxTrainData = FxDataSet()
-    fxTrainData.set( train_data, train_label )
-    fxTrainData.convOneHot()
-    fxTrainData.convNormalize()
 
+    #入力データ整形
+    num_seq = 5
+    num_input = 60
+    num_weight = 128
+    num_result = 3
+
+    #mnistデータを格納しimpoたオブジェクトを呼び出す
+    #mnist = input_data.read_data_sets("data/", one_hot=True)
+    fxDS = read_data_sets('USDJPY', train_size=200,test_size=50,one_hot=True)
