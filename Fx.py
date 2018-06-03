@@ -6,6 +6,8 @@ import Adf2Data as a2d
 import MakeLearningData as mld
 import DataConvert as dc
 import numpy as np
+import matplotlib.pyplot as plt
+import mpl_finance as mpf
 
 # Const
 TRAIN_SIZE = 100
@@ -504,6 +506,27 @@ class FxDataSet():
         np.save( data_path, self.datas)
         np.save( label_path, self.labels)
 
+    def showCandle( self, idx ):
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        nary = np.zeros((self.sizeofset,4),dtype=float)
+
+        fxary = self.datas[idx].reshape((self.sizeofset,self.sizeofdata))
+        fxlabelary = self.labels[idx]
+        idxary = np.where(fxlabelary==1)
+        idx = idxary[0][0]
+        ax.title = 'label:' + str(idx)
+        for i in range(self.sizeofset):
+            data = fxary[i] 
+            nary[i] = [data[0],data[1],data[2],data[3]]
+        
+        tary = nary.T
+        mpf.candlestick2_ohlc(ax,opens=tary[0],highs=tary[1],lows=tary[2],closes=tary[3],width=0.7, colorup='g', colordown='r')
+            #mpf.candlestick_ohlc(ax,[op,hi,lo,cl],width=0.7, colorup='g', colordown='r')
+        ax.grid()
+        plt.show()
+
+
 class FxTFData():
     def __init__(self, pair, tick):
         self.train =[]
@@ -543,3 +566,5 @@ if __name__ == '__main__':
     #mnistデータを格納しimpoたオブジェクトを呼び出す
     #mnist = input_data.read_data_sets("data/", one_hot=True)
     fxDS = read_data_sets('USDJPY', train_size=200,test_size=50,one_hot=True)
+    for i in range(20):
+        fxDS.train.showCandle(i*10-1)
