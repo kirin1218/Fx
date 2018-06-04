@@ -10,8 +10,6 @@ import matplotlib.pyplot as plt
 import mpl_finance as mpf
 
 # Const
-TRAIN_SIZE = 100
-TEST_SIZE = 30
 CNT_PER_ONEDATA = 60
 NEED_FUTURE_POS = 30
 train_current = 0
@@ -163,6 +161,22 @@ def LoadLastData(pairName,tick,train_size,test_size):
 def read_data_sets( pair, train_size, test_size, one_hot=False, tick=1, sizeofset=60, labelpos = 30):
     Mgr = FxDataManager(pair=pair, tick=tick,sizeofset=sizeofset,labelpos=labelpos,train_size=train_size,test_size=test_size,one_hot=one_hot)
     return Mgr.MakeData()
+
+def showCandle2( nplist ):
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        nary = np.zeros((60,4),dtype=float)
+
+        fxary = nplist.reshape(60,5)
+        for i in range(60):
+            data = fxary[i] 
+            nary[i] = [data[0],data[1],data[2],data[3]]
+        
+        tary = nary.T
+        mpf.candlestick2_ohlc(ax,opens=tary[0],highs=tary[1],lows=tary[2],closes=tary[3],width=0.7, colorup='g', colordown='r')
+        ax.grid()
+        plt.show()
+
 
 class FxDataManager():
     def __init__(self,pair,train_size,test_size,tick=1,labelpos=1,sizeofset=60,one_hot=False):
@@ -410,6 +424,9 @@ class FxDataManager():
                 DeleteLastData(self.pair,self.tick,self.train_size,self.test_size)
 
         self.alltrainlist, self.alllabellist = self.LoadTrainData() 
+        #for i in range(self.alltrainlist.shape[0]):
+        #    showCandle2(self.alltrainlist[i])
+
         if self.alltrainlist is not None and self.alllabellist is not None:
             #バッチサイズ
             max_size = self.alltrainlist.shape[0]
@@ -515,7 +532,8 @@ class FxDataSet():
         fxlabelary = self.labels[idx]
         idxary = np.where(fxlabelary==1)
         idx = idxary[0][0]
-        ax.title = 'label:' + str(idx)
+        plt.title('label:' + str(idx))
+        #ax.title = 'label:' + str(idx)
         for i in range(self.sizeofset):
             data = fxary[i] 
             nary[i] = [data[0],data[1],data[2],data[3]]
@@ -566,5 +584,7 @@ if __name__ == '__main__':
     #mnistデータを格納しimpoたオブジェクトを呼び出す
     #mnist = input_data.read_data_sets("data/", one_hot=True)
     fxDS = read_data_sets('USDJPY', train_size=200,test_size=50,one_hot=True)
-    for i in range(20):
-        fxDS.train.showCandle(i*10-1)
+    #for i in range(200):
+    #    print(fxDS.train.datas[i])
+    #for i in range(199):
+    #    fxDS.train.showCandle(i)
