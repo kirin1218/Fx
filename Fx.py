@@ -270,6 +270,15 @@ class FxDataManager():
 
         return trainpath, labelpath
 
+    def MakeCandleListWith1MList(self, train_list, term ):
+        for i in range(len(train_list) ):
+            cur = train_list[i]
+            m = cur[5]
+            cnt = m%term
+            for j in range(cnt,cnt-Term):
+                print(j)
+
+
     #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
     def MakeTrainData(self):
         idxpath = '.'+os.sep+'Data'+os.sep + self.pair + '_' + self.getTickName() + ".idx"
@@ -291,12 +300,16 @@ class FxDataManager():
                 with open(datpath) as f:
                     for line in f:
                         d,st,hi,lo,en,cnt = ParseTickDatLine(line)
-                        alldatList.append([st,hi,lo,en,cnt])
+                        m = d.minute
+                        alldatList.append([st,hi,lo,en,cnt,m])
+
+                #1分足から5分足のリストを作成する
+                self.MakeCandleListWith1MList(alldatList,5)
 
                 cnt1 = 0
                 allcount = len(idxList)
                 #データ数,セット数(60),要素数(op,hi,lo,cl,cnt)のnumpy配列を作成
-                train_list = np.zeros(([allcount,self.sizeofset,5]),dtype=float)
+                train_list = np.zeros(([allcount,self.sizeofset,6]),dtype=float)
                 #データ数,ラベル情報(10up,5up,even,5down,10down)のnumpy配列を作成
                 label_list = np.zeros(([allcount,3]),dtype=float)
 
