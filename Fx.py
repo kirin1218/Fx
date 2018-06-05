@@ -272,12 +272,35 @@ class FxDataManager():
 
     def MakeCandleListWith1MList(self, train_list, term ):
         for i in range(len(train_list) ):
+            doextend = False
             cur = train_list[i]
             m = cur[5]
             cnt = m%term
-            for j in range(cnt,cnt-Term):
-                print(j)
-
+            stock = []
+            if cnt == 0:
+                for j in range(term):
+                    add = train_list[i+j]
+                    #  データが連続してなかったら抜ける
+                    if add[5]%term != j:
+                        break
+                    if i + j < len(train_list):
+                        stock.append(add)
+                size = len(stock)
+                if size > 0:
+                    Op = stock[0][0]
+                    Cl = stock[size-1][3]
+                    Hi = 0
+                    Lo = 999999
+                    for j in range(size):
+                        if Hi < stock[j][1]:
+                            Hi = stock[j][1]
+                        if Lo > stock[j][2]:
+                            Lo = stock[j][2]
+                for j in range(size):
+                    train_list[i+j].extend([Op,Hi,Lo,Cl])
+                    doextend = True
+            if doextend == False:
+                train_list[i].extend([0,0,0,0])
 
     #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
     def MakeTrainData(self):
