@@ -270,8 +270,10 @@ class FxDataManager():
 
         return trainpath, labelpath
 
-    def MakeCandleListWith1MList(self, train_list, term ):
-        for i in range(len(train_list) ):
+    def AddCandleListWith1MList(self, train_list, term ):
+        i = 0
+        #for i in range(len(train_list) ):
+        while i < len(train_list):
             doextend = False
             cur = train_list[i]
             m = cur[5]
@@ -279,12 +281,13 @@ class FxDataManager():
             stock = []
             if cnt == 0:
                 for j in range(term):
+                    if i + j >= len(train_list):
+                        break
                     add = train_list[i+j]
                     #  データが連続してなかったら抜ける
                     if add[5]%term != j:
                         break
-                    if i + j < len(train_list):
-                        stock.append(add)
+                    stock.append(add)
                 size = len(stock)
                 if size > 0:
                     Op = stock[0][0]
@@ -297,11 +300,22 @@ class FxDataManager():
                         if Lo > stock[j][2]:
                             Lo = stock[j][2]
                 for j in range(size):
-                    train_list[i+j].extend([Op,Hi,Lo,Cl])
+                    train_list[i].extend([Op,Hi,Lo,Cl])
+                    i+=1
                     doextend = True
             if doextend == False:
                 train_list[i].extend([0,0,0,0])
+                i+=1
 
+    def popNoneData(self,lists):
+        size = len(lists): 
+        cur = size-1
+        nlist = np.array(lists)
+        while cur >= 0:
+            data = nlist[cur]
+            idxary = np.where(data==0)
+            cur-=1
+        return nlist.tolist()
     #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
     def MakeTrainData(self):
         idxpath = '.'+os.sep+'Data'+os.sep + self.pair + '_' + self.getTickName() + ".idx"
@@ -327,12 +341,17 @@ class FxDataManager():
                         alldatList.append([st,hi,lo,en,cnt,m])
 
                 #1分足から5分足のリストを作成する
-                self.MakeCandleListWith1MList(alldatList,5)
+                self.AddCandleListWith1MList(alldatList,5)
+                self.AddCandleListWith1MList(alldatList,15)
+                self.AddCandleListWith1MList(alldatList,30)
+                self.AddCandleListWith1MList(alldatList,60)
 
+                sizeofdata = len(alldatList[0])
+                alldatList = popNoneData( alldatList )
                 cnt1 = 0
                 allcount = len(idxList)
                 #データ数,セット数(60),要素数(op,hi,lo,cl,cnt)のnumpy配列を作成
-                train_list = np.zeros(([allcount,self.sizeofset,6]),dtype=float)
+                train_list = np.zeros(([allcount,self.sizeofset,sizeofdata]),dtype=float)
                 #データ数,ラベル情報(10up,5up,even,5down,10down)のnumpy配列を作成
                 label_list = np.zeros(([allcount,3]),dtype=float)
 
