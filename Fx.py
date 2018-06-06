@@ -365,6 +365,8 @@ class FxDataManager():
                     cnt2 = 0
                     #訓練データの作成
                     for j in range(start,end):
+                        print(train_list[cnt1][cnt2],type(train_list[cnt1][cnt2]))
+                        print(alldatList[j],type(alldatList[j]))
                         train_list[cnt1][cnt2] = alldatList[j]
                         cnt2+=1
                     if cnt1%100 == 0:
@@ -404,10 +406,21 @@ class FxDataManager():
                     if cnt1%100 == 0:
                         print('MakeTrainData(label):',cnt1,'/',allcount)
                     cnt1+=1
+                print(train_list.shape)
                 print(label_list.shape)
-
                 #ゴミデータを削除する
-            
+                size = train_list.shape[0]
+                cur = size - 1
+                udellist =  np.unique(np.where(train_list==0)[0])
+                while cur >= 0:
+                    data = train_list[cur]
+                    chk = np.where(data==0)
+                    if chk[0].size > 0:
+                        train_list = np.delete(train_list,cur)
+                        label_list = np.delete(label_list,cur)
+                    cur-=1
+                print(train_list.shape)
+                print(label_list.shape)
             datacache, labelcache = self.MakeTrainCachePath()
             #np.save( datacache, train_list ) 
             #np.save( labelcache, label_list ) 
