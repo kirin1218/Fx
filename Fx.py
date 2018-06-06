@@ -308,14 +308,17 @@ class FxDataManager():
                 i+=1
 
     def popNoneData(self,lists):
-        size = len(lists): 
+        size = len(lists)
         cur = size-1
         nlist = np.array(lists)
         while cur >= 0:
             data = nlist[cur]
-            idxary = np.where(data==0)
+            chk = np.where(data==0)
+            if chk[0].size != 0:
+                lists.pop(cur)
+                #data = np.delete(data,cur)
             cur-=1
-        return nlist.tolist()
+        return lists
     #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
     def MakeTrainData(self):
         idxpath = '.'+os.sep+'Data'+os.sep + self.pair + '_' + self.getTickName() + ".idx"
@@ -347,7 +350,7 @@ class FxDataManager():
                 self.AddCandleListWith1MList(alldatList,60)
 
                 sizeofdata = len(alldatList[0])
-                alldatList = popNoneData( alldatList )
+                #alldatList = self.popNoneData( alldatList )
                 cnt1 = 0
                 allcount = len(idxList)
                 #データ数,セット数(60),要素数(op,hi,lo,cl,cnt)のnumpy配列を作成
@@ -402,6 +405,8 @@ class FxDataManager():
                         print('MakeTrainData(label):',cnt1,'/',allcount)
                     cnt1+=1
                 print(label_list.shape)
+
+                #ゴミデータを削除する
             
             datacache, labelcache = self.MakeTrainCachePath()
             #np.save( datacache, train_list ) 
