@@ -7,7 +7,7 @@ import MakeLearningData as mld
 import DataConvert as dc
 import numpy as np
 import matplotlib.pyplot as plt
-import mpl_finance as mpf
+#import mpl_finance as mpf
 
 # Const
 CNT_PER_ONEDATA = 60
@@ -319,6 +319,54 @@ class FxDataManager():
                 #data = np.delete(data,cur)
             cur-=1
         return lists
+
+    def removeInvalidData(self, train_list, label_list):
+        newTrain = None
+        newLabel = None
+        #ゴミデータを削除する
+        delcnt = 0
+        ts = train_list.shape
+        ls = label_list.shape
+        size = ts[0]
+        cur = size - 1
+        while cur >= 0:
+            data = train_list[cur]
+            chk = np.where(data==0)
+            bDel = False
+            for l in range(len(chk[0])):
+                if len(chk) > 1:
+                    i2 = chk[1][l]
+                    if i2 != 5:
+                        bDel = True
+                        break
+
+            #分のところ（[5])は0もあり得るのでそこだけだったら気にしない
+            if bDel != False:
+                delcnt += 1
+            cur-=1
+        newTrain = np.zeros([ts[0]-delcnt,ts[1],ts[2]])
+        newLabel = np.zeros([ls[0]-delcnt,ls[1]])
+
+        ai = 0
+        for i in range(ts[0]):
+            data = train_list[i]
+            chk = np.where(data==0)
+            bDel = False
+            for l in range(len(chk[0])):
+                if len(chk) > 1:
+                    i2 = chk[1][l]
+                    if i2 != 5:
+                        bDel = True
+                        break
+
+            #分のところ（[5])は0もあり得るのでそこだけだったら気にしない
+            if bDel == False:
+                newTrain[ai] = train_list[i]
+                newLabel[ai] = label_list[i]
+                ai += 1
+
+        return newTrain, newLabel
+
     #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
     def MakeTrainData(self):
         idxpath = '.'+os.sep+'Data'+os.sep + self.pair + '_' + self.getTickName() + ".idx"
@@ -408,27 +456,8 @@ class FxDataManager():
                     cnt1+=1
                 print(train_list.shape)
                 print(label_list.shape)
-                #ゴミデータを削除する
-                size = train_list.shape[0]
-                cur = size - 1
-                while cur >= 0:
-                    data = train_list[cur]
-                    chk = np.where(data==0)
-                    bDel = False
-                    for l in range(len(chk[0])):
-                        if len(chk) > 1:
-                            i2 = chk[1][l]
-                            if i2 != 5:
-                                bDel = True
-                                break
-                        else:
-                            a = 3
 
-                    #分のところ（[5])は0もあり得るのでそこだけだったら気にしない
-                    if bDel != False:
-                        train_list = np.delete(train_list,cur,0)
-                        label_list = np.delete(label_list,cur,0)
-                    cur-=1
+                train_list, label_list = self.removeInvalidData( train_list, label_list )
                 print(train_list.shape)
                 print(label_list.shape)
             datacache, labelcache = self.MakeTrainCachePath()
@@ -540,7 +569,7 @@ class FxDataManager():
             self.fxTFData.set( fxTrainData, fxTestData)
             if self.one_hot != False:
                 self.fxTFData.convOneHot()
-                #self.fxTFData.convNormalize()
+                self.fxTFData.convNormalize()
                 self.fxTFData.save()
                 return self.fxTFData
         return None

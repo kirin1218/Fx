@@ -5,7 +5,7 @@ import Fx
 import numpy as np
 
 #入力データ整形
-num_seq = 5
+num_seq = 22
 num_input = 60
 num_weight = 128
 num_result = 3
