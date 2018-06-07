@@ -416,15 +416,18 @@ class FxDataManager():
                     chk = np.where(data==0)
                     bDel = False
                     for l in range(len(chk[0])):
-                        i2 = chk[1][l]
-                        if i2 != 5:
-                            bDel = True
-                            break
+                        if len(chk) > 1:
+                            i2 = chk[1][l]
+                            if i2 != 5:
+                                bDel = True
+                                break
+                        else:
+                            a = 3
 
                     #分のところ（[5])は0もあり得るのでそこだけだったら気にしない
                     if bDel != False:
-                        train_list = np.delete(train_list,cur)
-                        label_list = np.delete(label_list,cur)
+                        train_list = np.delete(train_list,cur,0)
+                        label_list = np.delete(label_list,cur,0)
                     cur-=1
                 print(train_list.shape)
                 print(label_list.shape)
