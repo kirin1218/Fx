@@ -179,7 +179,7 @@ def showCandle2( nplist ):
 
 
 class FxDataManager():
-    def __init__(self,pair,train_size,test_size,tick=1,labelpos=1,sizeofset=60,one_hot=False):
+    def __init__(self,pair,train_size=200,test_size=50,tick=1,labelpos=1,sizeofset=60,one_hot=False):
         self.pair = pair
         self.tick = tick
         self.labelpos = labelpos
@@ -367,8 +367,7 @@ class FxDataManager():
 
         return newTrain, newLabel
 
-    #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
-    def MakeTrainData(self):
+    def MakeAllDatList(self):
         idxpath = '.'+os.sep+'Data'+os.sep + self.pair + '_' + self.getTickName() + ".idx"
         if os.path.exists( idxpath ) == False: 
             mld.MakeData( self.pair, self.sizeofset, self.labelpos, self.tick )
@@ -390,86 +389,94 @@ class FxDataManager():
                         d,st,hi,lo,en,cnt = ParseTickDatLine(line)
                         m = d.minute
                         alldatList.append([st,hi,lo,en,cnt,m])
+                return alldatList
+        return None
 
-                #1分足から5分足のリストを作成する
-                self.AddCandleListWith1MList(alldatList,5)
-                self.AddCandleListWith1MList(alldatList,15)
-                self.AddCandleListWith1MList(alldatList,30)
-                self.AddCandleListWith1MList(alldatList,60)
 
-                sizeofdata = len(alldatList[0])
-                #alldatList = self.popNoneData( alldatList )
-                cnt1 = 0
-                allcount = len(idxList)
-                #データ数,セット数(60),要素数(op,hi,lo,cl,cnt)のnumpy配列を作成
-                train_list = np.zeros(([allcount,self.sizeofset,sizeofdata]),dtype=float)
-                #データ数,ラベル情報(10up,5up,even,5down,10down)のnumpy配列を作成
-                label_list = np.zeros(([allcount,3]),dtype=float)
+    #訓練・テストに利用可能なtick配列とラベルのnumpy配列を作成しSaveする
+    def MakeTrainData(self):
+        alldatList = self.MakeAllDataList()
+        if alldatList is not None:
+            #1分足から5分足のリストを作成する
+            self.AddCandleListWith1MList(alldatList,5)
+            self.AddCandleListWith1MList(alldatList,15)
+            self.AddCandleListWith1MList(alldatList,30)
+            self.AddCandleListWith1MList(alldatList,60)
 
-                for i in idxList:
-                    start = i
-                    end = start + self.sizeofset
-                    label = end +  self.labelpos
-                    cnt2 = 0
-                    #訓練データの作成
-                    for j in range(start,end):
-                        #print(np.array(alldatList[j]))
-                        add = np.array(alldatList[j])
-                        train_list[cnt1][cnt2] = np.array(alldatList[j])
-                        cnt2+=1
-                    if cnt1%100 == 0:
-                        print('MakeTrainData(data):',cnt1,'/',allcount)
+            sizeofdata = len(alldatList[0])
+            #alldatList = self.popNoneData( alldatList )
+            cnt1 = 0
+            allcount = len(idxList)
+            #データ数,セット数(60),要素数(op,hi,lo,cl,cnt)のnumpy配列を作成
+            train_list = np.zeros(([allcount,self.sizeofset,sizeofdata]),dtype=float)
+            #データ数,ラベル情報(10up,5up,even,5down,10down)のnumpy配列を作成
+            label_list = np.zeros(([allcount,3]),dtype=float)
 
-                    cnt1+=1
-                #train_list = train_list.reshape(-1, self.sizeofset, 5 )
-                print(train_list.shape)
+            for i in idxList:
+                start = i
+                end = start + self.sizeofset
+                label = end +  self.labelpos
+                cnt2 = 0
+                #訓練データの作成
+                for j in range(start,end):
+                    #print(np.array(alldatList[j]))
+                    add = np.array(alldatList[j])
+                    train_list[cnt1][cnt2] = np.array(alldatList[j])
+                    cnt2+=1
+                if cnt1%100 == 0:
+                    print('MakeTrainData(data):',cnt1,'/',allcount)
 
-                cnt1 = 0
-                for i in idxList:
-                    start = i
-                    end = start + self.sizeofset
-                    label = end +  self.labelpos
+                cnt1+=1
+            #train_list = train_list.reshape(-1, self.sizeofset, 5 )
+            print(train_list.shape)
 
-                    #正解データの作成
-                    label_data = [0 for j in range(3)]
-                    #訓練データの最後のClose値
-                    lprice = alldatList[end-1][3]
-                    for j in range(end,label):
-                        data = alldatList[i]
-                        hi = float(data[1])
-                        lo = float(data[2])
-                        hidiff = hi - lprice
-                        lodiff = -(lprice-lo)
-                        if hidiff >= 0.1:
-                            label_data[0] = 1
-                            break
-                        if lodiff <= -0.1:
-                            label_data[2] = 1
-                            break
+            cnt1 = 0
+            for i in idxList:
+                start = i
+                end = start + self.sizeofset
+                label = end +  self.labelpos
 
-                    if label_data[0] == 0 and label_data[2] == 0:
-                        label_data[1] = 1
+                #正解データの作成
+                label_data = [0 for j in range(3)]
+                #訓練データの最後のClose値
+                lprice = alldatList[end-1][3]
+                for j in range(end,label):
+                    data = alldatList[i]
+                    hi = float(data[1])
+                    lo = float(data[2])
+                    hidiff = hi - lprice
+                    lodiff = -(lprice-lo)
+                    if hidiff >= 0.1:
+                        label_data[0] = 1
+                        break
+                    if lodiff <= -0.1:
+                        label_data[2] = 1
+                        break
 
-                    label_list[cnt1] = label_data
-                    if cnt1%100 == 0:
-                        print('MakeTrainData(label):',cnt1,'/',allcount)
-                    cnt1+=1
-                print(train_list.shape)
-                print(label_list.shape)
+                if label_data[0] == 0 and label_data[2] == 0:
+                    label_data[1] = 1
 
-                train_list, label_list = self.removeInvalidData( train_list, label_list )
-                print(train_list.shape)
-                print(label_list.shape)
+                label_list[cnt1] = label_data
+                if cnt1%100 == 0:
+                    print('MakeTrainData(label):',cnt1,'/',allcount)
+                cnt1+=1
+            print(train_list.shape)
+            print(label_list.shape)
+
+            train_list, label_list = self.removeInvalidData( train_list, label_list )
+            print(train_list.shape)
+            print(label_list.shape)
             datacache, labelcache = self.MakeTrainCachePath()
             #np.save( datacache, train_list ) 
             #np.save( labelcache, label_list ) 
-        batsize = train_list.shape[0]
-        batsize2 = label_list.shape[0]
+            batsize = train_list.shape[0]
+            batsize2 = label_list.shape[0]
 
-        if batsize > 0 and batsize == batsize2:
-            return train_list,label_list
-        else:
-            return None, None
+            if batsize > 0 and batsize == batsize2:
+                return train_list,label_list
+            else:
+                return None, None
+        return None, None
 
     def LoadTrainData(self):
         datacache, labelcache = self.MakeTrainCachePath()
@@ -684,9 +691,28 @@ class FxTFData():
         self.train.save(self.pair,self.tick,self.train_size)
         self.test.save(self.pair,self.tick,self.test_size)
     
-    
-if __name__ == '__main__':
+def MakeSMA(lists,term=10):
+    retList =[]
+    size = len(lists)
+    for i in range(size):
+        if i >= term-1:
+            nowtime = lists[i][5]
+            for j in range(term):
+                curtime = lists[j][5]
 
+                print(j)
+        else:
+            retList.append(0)
+    return retList
+    
+
+
+if __name__ == '__main__':
+    #データを読むだけ
+    fxdata = FxDataManager('USDJPY',tick=1)
+    ticklist = fxdata.MakeAllDatList()
+    MakeSMA(ticklist,term=10)
+'''
     #入力データ整形
     num_seq = 5
     num_input = 60
@@ -700,3 +726,4 @@ if __name__ == '__main__':
     #    print(fxDS.train.datas[i])
     #for i in range(199):
     #    fxDS.train.showCandle(i)
+'''
