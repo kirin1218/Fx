@@ -7,7 +7,9 @@ import MakeLearningData as mld
 import DataConvert as dc
 import numpy as np
 import matplotlib.pyplot as plt
-#import mpl_finance as mpf
+import mpl_finance as mpf
+import pandas as pd
+import TechnicalIndicator as ti
 
 # Const
 CNT_PER_ONEDATA = 60
@@ -161,21 +163,6 @@ def LoadLastData(pairName,tick,train_size,test_size):
 def read_data_sets( pair, train_size, test_size, one_hot=False, tick=1, sizeofset=60, labelpos = 30):
     Mgr = FxDataManager(pair=pair, tick=tick,sizeofset=sizeofset,labelpos=labelpos,train_size=train_size,test_size=test_size,one_hot=one_hot)
     return Mgr.MakeData()
-
-def showCandle2( nplist ):
-        fig = plt.figure()
-        ax = fig.add_subplot(1,1,1)
-        nary = np.zeros((60,4),dtype=float)
-
-        fxary = nplist.reshape(60,5)
-        for i in range(60):
-            data = fxary[i] 
-            nary[i] = [data[0],data[1],data[2],data[3]]
-        
-        tary = nary.T
-        mpf.candlestick2_ohlc(ax,opens=tary[0],highs=tary[1],lows=tary[2],closes=tary[3],width=0.7, colorup='g', colordown='r')
-        ax.grid()
-        plt.show()
 
 
 class FxDataManager():
@@ -366,6 +353,25 @@ class FxDataManager():
                 ai += 1
 
         return newTrain, newLabel
+
+    def SaveWorkFile(self,name,npdata):
+        path = '.'+os.sep+'Data'+os.sep + name + ".npy"
+        np.save(path,npdata)
+
+    def LoadWorkFile(self,name):
+        path = '.'+os.sep+'Data'+os.sep + name + ".npy"
+        if os.path.exists( path ) != False: 
+            return np.load(path)
+        return None
+    
+    def GetAllDat(self):
+        data = self.LoadWorkFile('alldat')
+        if data is not None:
+            return data
+        lists = self.MakeAllDatList()
+        data = np.array(lists)
+        self.SaveWorkFile('alldat',data)
+        return data
 
     def MakeAllDatList(self):
         idxpath = '.'+os.sep+'Data'+os.sep + self.pair + '_' + self.getTickName() + ".idx"
@@ -691,27 +697,106 @@ class FxTFData():
         self.train.save(self.pair,self.tick,self.train_size)
         self.test.save(self.pair,self.tick,self.test_size)
     
-def MakeSMA(lists,term=10):
-    retList =[]
-    size = len(lists)
-    for i in range(size):
-        if i >= term-1:
-            nowtime = lists[i][5]
-            for j in range(term):
-                curtime = lists[j][5]
+def showCandle2( npary ):
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    nary = np.zeros((npary.shape[0],4),dtype=float)
 
-                print(j)
-        else:
-            retList.append(0)
-    return retList
+    for i in range(npary.shape[0]):
+        data = npary[i] 
+        nary[i] = [data[0],data[1],data[2],data[3]]
     
+    tary = nary.T
+    #mpf.candlestick2_ohlc(ax,opens=tary[0],highs=tary[1],lows=tary[2],closes=tary[3],width=0.7, colorup='g', colordown='r')
 
+    term = 12
+    ema12 = ti.MakeEMA(npary[3],timelists=npary[5],term=term)
+    #ax.plot(range(len(ema12))[term:],ema12[term:])
+    term = 26
+    ema26 = ti.MakeEMA(npary[3],timelists=npary[5],term=term)
+    #ax.plot(range(len(ema26))[term:],ema26[term:])
+    macd,signal = ti.MakeMACD(npary.tolist())
+    term = 30
+    ax.plot(range(len(macd))[term:],macd[term:])
+    ax.plot(range(len(signal))[term:],signal[term:])
+    ax.grid()
+    plt.show()
+
+   
+def groupingtick( ary ):
+    lists = []
+    i = 0
+    while i < ary.shape[0]:
+        start = i
+        cnt = 1
+        starttime = ary[i][5]
+        j = start + 1
+        while j < ary.shape[0]:
+            time = ary[j][5]
+            if (starttime + cnt)%60 != time:
+                lists.append([start,j,cnt])
+                break
+            cnt += 1
+            j += 1
+        i = j
+    return lists
+
+
+
+
+def randomwalk(periods=None, start=None, end=None, freq='B', tz=None,
+               normalize=False, name=None, closed=None, tick=1, **kwargs):
+    """Returns random up/down pandas Series.
+
+    Usage:
+        ```
+        import datetime
+        randomwalk(100)  # Returns +-1up/down 100days from now.
+        randomwalk(100, freq='H')  # Returns +-1up/down 100hours from now.
+        randomwalk(100, ,tick=0.1 freq='S')  # Returns +-0.1up/down 100seconds from now.
+        randomwalk(100, start=datetime.datetime.today())  # Returns +-1up/down 100days from now.
+        randomwalk(100, end=datetime.datetime.today())
+            # Returns +-1up/down back to 100 days from now.
+        randomwalk(start=datetime.datetime(2000,1,1), end=datetime.datetime.today())
+            # Returns +-1up/down from 2000-1-1 to now.
+        randomwalk(100, freq='H').resample('D').ohlc()  # random OHLC data
+        ```
+
+    Args:
+        periods: int
+        start: start time (default datetime.now())
+        end: end time
+        freq: ('M','W','D','B','H','T','S') (default 'B')
+        tz: time zone
+        tick: up/down unit size (default 1)
+
+    Returns:
+        pandas Series with datetime index
+    """
+    if not start and not end:
+        start = pd.datetime.today().date()  # default arg of `start`
+    index = pd.DatetimeIndex(start=start, end=end, periods=periods, freq=freq, tz=tz,
+                             normalize=normalize, name=name, closed=closed, **kwargs)
+    bullbear = pd.Series(tick * np.random.randint(-1, 2, len(index)),
+                         index=index, name=name, **kwargs)  # tick * (-1,0,1のどれか)
+    price = bullbear.cumsum()  # 累積和
+    return price
 
 if __name__ == '__main__':
+    #np.random.seed(1)  # ランダムステートのリセット。常に同じランダムウォークが出来上がる
+    #rw = randomwalk(60*24*90, freq='T', tick=0.01)
+    #rw.head(5)
     #データを読むだけ
     fxdata = FxDataManager('USDJPY',tick=1)
-    ticklist = fxdata.MakeAllDatList()
-    MakeSMA(ticklist,term=10)
+    tickary = fxdata.GetAllDat()
+    groups = groupingtick(tickary)
+    for group in groups:
+        print( group[0], group[1], group[2])
+        viewary = tickary[group[0]:group[0]+600]
+        print( viewary.shape )
+        showCandle2(viewary)
+        break
+    #MakeSMA(ticklist,term=10)
 '''
     #入力データ整形
     num_seq = 5
