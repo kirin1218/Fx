@@ -80,7 +80,7 @@ def checkdata( start, cnt, listData, needFuturePos, tick ):
         prevDate = listData[i][0] 
 
     return True
-
+import pandas as pd
 def MakeData( pairName, cntPerOneData, needFuturePos, tick ):
     tick_name = ''
     if tick == 1:
@@ -95,20 +95,25 @@ def MakeData( pairName, cntPerOneData, needFuturePos, tick ):
             dc.DatTo1Min(pairName)
         else:
             path = datapath
-    if tick == 1:
-        priceData = []
-        with open(path) as f:
-            lines = f.readlines()
-            for line in lines:
-                d,st,hi,lo,en,cnt = TickData2List(line)
-                if d != None:
-                    if type(st) is str:
-                        #print(d,st,hi,lo,en)
-                        priceData.append([d,float(st),float(hi),float(lo),float(en),int(cnt)])
-                    else:
-                        print(type(st))
+    csv_path = '.'+os.sep+'Data'+os.sep + pairName + tick_name + ".csv"
+    if os.path.exists(csv_path) == False:
+        clmn = ['Date','Open','High','Low','Close','UpdateCount']
+        tick_list = pd.DataFrame(index=[],columns=clmn)
+        if tick == 1:
+            with open(path) as f:
+                lines = f.readlines()
+                for line in lines:
+                    d,st,hi,lo,en,cnt = TickData2List(line)
+                    if d != None:
+                        if type(st) is str:
+                            tinfo = pd.Series([d,float(st),float(hi),float(lo),float(en),int(cnt)],index=tick_list.columns)
+                            tick_list = tick_list.append(tinfo, ignore_index = True)  
+                        else:
+                            print(type(st))
+        if tick_list.size() > 0:
+            tick_list.to_csv(csv_path)
 
-
+'''
         print("check start")
         listDataIdxs = []
         for i in range(0,len(priceData)):
@@ -119,4 +124,4 @@ def MakeData( pairName, cntPerOneData, needFuturePos, tick ):
             with open( '.'+os.sep+'Data'+os.sep + pairName + tick_name + ".idx",'w') as f:
                 for idx in listDataIdxs:
                     f.write(str(idx)+"\n")
-
+'''

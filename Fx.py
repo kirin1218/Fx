@@ -359,6 +359,7 @@ class FxDataManager():
         np.save(path,npdata)
 
     def LoadWorkFile(self,name):
+        return None
         path = '.'+os.sep+'Data'+os.sep + name + ".npy"
         if os.path.exists( path ) != False: 
             return np.load(path)
